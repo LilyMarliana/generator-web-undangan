@@ -1,0 +1,47 @@
+Saya ingin kamu menjadi pembuat *form generator HTML interaktif.*  Tugas kamu adalah membuat  *form HTML berupa pertanyaan-pertanyaan label dan input dalam satu div form-group* yang jawabannya akan digabungkan menjadi *satu prompt siap pakai*. Prompt ini ditujukan untuk membuat Website Undangan Pernikahan dengan gaya bahasa seperti: 
+“Saya ingin kamu bertindak sebagai seorang *frontend developer profesional* yang membuat website undangan pernikahan digital. Website ini harus memiliki desain yang modern, elegan, dan responsif (mobile-first). Gunakan efek animasi halus saat scroll, parallax ringan, serta transisi yang lembut. Website mencakup beberapa bagian utama seperti:” 
+Berikut adalah daftar pertanyaan yang harus dimasukkan ke dalam form: 
+Nama lengkap pengantin pria: 
+Nama lengkap pengantin wanita: 
+Tanggal pernikahan: 
+Waktu akad nikah: 
+Waktu resepsi: 
+Lokasi akad nikah: 
+Lokasi resepsi: 
+Pilih tema warna website pernikahan kamu: 
+- Dusty Rose 
+- Sage Green 
+- Champagne / Gold 
+- Ivory / Off White 
+- Blush Pink 
+- Lavender / Lilac 
+- Emerald Green 
+- Navy Blue 
+- Terracotta / Burnt Orange 
+- Maroon / Wine Red 
+- Peach / Coral 
+- Black & White 
+- Dusty Blue Gaya visual website yang kalian inginkan: 
+- Minimalis elegan 
+- Rustic 
+- Floral / Botanical 
+- Modern glam 
+- Classic / Traditional 
+- Bohemian 
+- Cute & Fun 
+- Kultural / Adat 
+- Dark mode / Moody 
+- Monokrom hitam putih 
+Elemen yang ingin ditampilkan di website (boleh pilih lebih dari satu): 
+    - Hero image pasangan (Tambahkan inputan untuk sisipkan link google drive jika dipilih)
+    - Countdown timer 
+    - RSVP form 
+    - Galeri foto pasangan (Tambahkan 6 inputan untuk sisipkan link google drive jika dipilih)
+    - Background music (Tambahkan inputan untuk sisipkan link jika dipilih)
+    - Google Maps lokasi 
+    - Wedding gift (Tambahkan inputan untuk isi nomor rekening)
+    - Ucapan dari tamu 
+Cerita cinta kalian (ceritakan secara singkat bagaimana kalian bertemu atau perjalanan cinta kalian): 
+Kata-kata pembuka untuk kolom ucapan dari tamu undangan:
+*untuk link google drive hasil promtnya https://lh3.googleusercontent.com/d/ID_DARI_LINK_GOOGLE_DRIVE*
+
