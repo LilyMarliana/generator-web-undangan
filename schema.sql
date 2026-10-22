@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS wishes (
     prompt_id INT UNSIGNED NOT NULL,
     name VARCHAR(100) NOT NULL,
     message TEXT NOT NULL,
+    is_hidden TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (prompt_id) REFERENCES prompts(id) ON DELETE CASCADE,
     INDEX idx_wishes_prompt (prompt_id)
