@@ -1,46 +1,32 @@
 <?php
-require_once __DIR__ . '/../../config.php';
-require_once __DIR__ . '/../../lib/auth.php';
-require_login();
+require_once __DIR__ . '/../../lib/layout.php';
+require_user();
 
-if (current_user()['role'] !== 'user') {
-    redirect(BASE_URL . '/pages/user/dashboard.php');
+/* Pesan flash gaya lama dipindah ke sistem pesan baru */
+if ($m = flash('save_success')) {
+    msg_add('success', $m);
+    unset($_SESSION['flash']['save_success']);
 }
 
-$flash = flash('save_success');
+app_header('Buat Undangan', 'generator', [
+    'subtitle' => 'Isi 5 langkah singkat, prompt siap pakai untuk AI pembuat website akan otomatis tersusun.',
+]);
 ?>
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generator - Wedding Website Generator</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../../assets/style.css">
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <span class="header-eyebrow">Wedding Website Generator</span>
-            <h1>Buat Prompt Undangan</h1>
-            <p>Isi 5 langkah singkat, prompt siap pakai untuk AI pembuat website akan otomatis tersusun.</p>
-        </div>
-        <div class="content">
-            <?php if ($flash): ?>
-                <div class="success-msg"><?= e($flash) ?></div>
-            <?php endif; ?>
-            <div class="dash-nav">
-                <a href="generator.php" class="active">Generator Baru</a>
-                <a href="dashboard.php">Dashboard</a>
-            </div>
+<div class="wizard-wrap" style="max-width:56rem;">
+    <ol class="stepper" id="stepper" aria-label="Langkah pembuatan undangan">
+        <li class="active" data-s="1"><span class="n">1</span>Pernikahan</li>
+        <li data-s="2"><span class="n">2</span>Tema</li>
+        <li data-s="3"><span class="n">3</span>Elemen</li>
+        <li data-s="4"><span class="n">4</span>Cerita</li>
+        <li data-s="5"><span class="n">5</span>Review</li>
+    </ol>
 
             <div class="wizard-progress">
                 <div class="wizard-progress-bar"><div class="wizard-progress-fill" id="wizardProgressFill"></div></div>
                 <div class="wizard-progress-label" id="wizardProgressLabel">Langkah 1 dari 5 — Data Pernikahan</div>
             </div>
 
+            <div class="wizard-card">
             <form id="weddingForm">
                 <div class="wizard-step" data-step="1">
                     <h2 class="step-title">Data Pernikahan</h2>
@@ -288,14 +274,14 @@ $flash = flash('save_success');
                     </div>
                 </div>
             </form>
+            </div>
 
             <div id="resultContainer" class="result-container">
                 <h3>Prompt Siap Pakai:</h3>
                 <div id="resultText" class="result-text"></div>
                 <button class="btn-success" onclick="copyToClipboard()">Copy Prompt</button>
             </div>
-        </div>
-    </div>
+</div>
 
     <script>
     const stepLabels = {
@@ -313,6 +299,11 @@ $flash = flash('save_success');
             step.style.display = (parseInt(step.dataset.step, 10) === n) ? 'block' : 'none';
         });
         currentStep = n;
+        document.querySelectorAll('#stepper li').forEach(li => {
+            const s = parseInt(li.dataset.s, 10);
+            li.classList.toggle('active', s === n);
+            li.classList.toggle('done', s < n);
+        });
         const pct = Math.round((n / totalSteps) * 100);
         const fill = document.getElementById('wizardProgressFill');
         const label = document.getElementById('wizardProgressLabel');
@@ -751,10 +742,8 @@ ${openingQuote ? 'Quote / Ayat Pembuka:\n"' + openingQuote + '"\n\n' : ''}Websit
             const btn = document.querySelector('.btn-success');
             const original = btn.textContent;
             btn.textContent = 'Tersalin!';
-            btn.style.background = '#20c997';
             setTimeout(() => {
                 btn.textContent = original;
-                btn.style.background = '#28a745';
             }, 2000);
         }).catch(() => alert('Gagal menyalin. Silakan salin manual.'));
     }
@@ -764,5 +753,4 @@ ${openingQuote ? 'Quote / Ayat Pembuka:\n"' + openingQuote + '"\n\n' : ''}Websit
         showStep(1);
     });
     </script>
-</body>
-</html>
+<?php app_footer();

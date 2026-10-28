@@ -50,6 +50,16 @@ function require_user() {
     }
 }
 
+/** Kuota pembuatan undangan per hari. Satu-satunya tempat angka ini diatur untuk dashboard. */
+function daily_quota() {
+    return 5; // TODO (koordinasi dgn Jibril): bisa diganti mengikuti paket/plan user
+}
+
+/** True kalau halaman user itu sudah ada (supaya tidak ada link mati saat merge bertahap). */
+function has_page($file) {
+    return is_file(__DIR__ . '/../pages/user/' . $file);
+}
+
 function url_user($file)  { return BASE_URL . '/pages/user/' . $file; }
 function url_admin($file) { return BASE_URL . '/pages/admin/' . $file; }
 
