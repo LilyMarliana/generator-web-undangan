@@ -4,3 +4,6 @@ assets/*.png
 assets/*.mp3
 hasil
 /config.php
+
+CLAUDE.md
+/.claude
