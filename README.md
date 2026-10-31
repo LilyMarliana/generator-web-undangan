@@ -4,16 +4,9 @@ Sistem web untuk membuat *prompt* undangan pernikahan digital yang siap digunaka
 
 ---
 
-## 🚀 Demo
-
-- **Admin login**: `admin@example.com` / `admin123`
-- **User login**: `user@example.com` / `user123`
-
----
-
 ## ✨ Fitur Utama
 
-- **🔐 Sistem Autentikasi** — Registrasi & login terpisah untuk user dan admin
+- **🔐 Sistem Autentikasi** — Registrasi & login terpisah untuk user dan admin, lewat Supabase Auth (email/password dan Google OAuth)
 - **📊 Dashboard User** — Generate prompt, simpan, edit, hapus prompt sendiri
 - **⚙️ Dashboard Admin** — Lihat statistik, semua user, dan semua prompt yang dibuat
 - **📊 Kuota Harian** — 5 prompt per user per hari (reset otomatis)
@@ -26,7 +19,7 @@ Sistem web untuk membuat *prompt* undangan pernikahan digital yang siap digunaka
 ## 🚀 Cara Menjalankan & Menggunakan
 
 1. Buka halaman utama
-2. Daftar akun baru atau login dengan akun demo
+2. Daftar akun baru atau login dengan akun Google
 3. Masuk ke **Dashboard User** → klik **Generator Baru**
 4. Isi data pasangan dan pilih elemen yang ingin ditampilkan
 5. Klik **Generate Prompt**, salin hasilnya, atau simpan ke dashboard
@@ -75,17 +68,40 @@ define('DB_NAME', 'wedding_gen_db');
 define('BASE_URL', 'http://localhost/nama-folder-project');
 ```
 
+Isi juga konfigurasi Supabase Auth:
+
+```php
+define('SUPABASE_URL', 'https://project-anda.supabase.co');
+define('SUPABASE_KEY', 'sb_publishable_...');
+```
+
+- `SUPABASE_URL` diambil dari Supabase Dashboard → Settings → API → Project URL
+- `SUPABASE_KEY` bisa berupa publishable key (`sb_publishable_...`) atau anon key (`eyJ...`)
+
+> `config.php` sudah masuk `.gitignore`, jadi kredensial asli tidak ikut ter-commit ke repo.
+
+Bila `SUPABASE_URL` masih kosong, aplikasi otomatis jatuh ke autentikasi lokal MySQL (`password_hash` / `password_verify`) supaya development tetap jalan tanpa Supabase.
+
+### 3b. Konfigurasi Supabase (opsional, untuk Google login)
+
+1. Di Supabase Dashboard → **Authentication** → **URL Configuration**, isi **Site URL** dengan base URL aplikasi lalu tambahkan **Redirect URLs** milikmu, misalnya `http://localhost/nama-folder-project/**`
+2. Di **Authentication** → **Providers** → **Google**, aktifkan provider-nya lalu isi Client ID dan Client Secret dari Google Cloud Console
+3. Di Google Cloud Console → **Credentials** → OAuth 2.0 Client ID, tambahkan redirect URI:
+   ```
+   https://project-anda.supabase.co/auth/v1/callback
+   ```
+
+Alur login memakai PKCE, jadi `redirect_to` ke aplikasi sendiri sudah ditangani otomatis oleh `pages/auth.php`.
+
 ### 4. Deploy
 
 Letakkan seluruh folder project ke web root server (contoh Laragon: `C:\laragon\www\`).
 
 ### 5. Akun awal
 
-Halaman login **otomatis membuat** akun demo bila belum ada:
-- **Admin**: `admin@example.com` / `admin123`
-- **User**: `user@example.com` / `user123`
+Tidak ada akun demo yang dibuat otomatis. Daftar lewat halaman **Daftar** atau tombol **Daftar dengan Google**, lalu masuk lewat halaman **Masuk**.
 
-Buka URL project di browser untuk memulai.
+Untuk membuat akun admin, ubah kolom `role` menjadi `admin` pada baris user di tabel `users` (misalnya lewat phpMyAdmin atau HeidiSQL).
 
 ---
 
@@ -197,16 +213,19 @@ if (res.ok && data.success && Array.isArray(data.data)) {
 
 ```text
 generator-web-uandangan/
-├── config.php              # Konfigurasi DB + BASE_URL + helpers
+├── config.php              # Konfigurasi DB + BASE_URL + Supabase (gitignored)
+├── config-example.php      # Template konfigurasi
 ├── schema.sql              # Skema database (users, prompts, quota_logs, rsvps, wishes)
 ├── migration_api.sql       # Migrasi tambahan (API key + RSVP/Wishes)
 ├── api.php                 # Public API RSVP & Ucapan Tamu
 ├── index.php               # Halaman utama (landing)
 ├── lib/
-│   └── auth.php            # Session, login, logout, guard role
+│   ├── auth.php            # Session, login, logout, guard role
+│   └── supabase.php        # Client Supabase Auth (sign in/up, OAuth PKCE)
 ├── pages/
-│   ├── login.php           # Login + seeder akun demo
+│   ├── login.php           # Login (Supabase Auth + Google OAuth)
 │   ├── register.php        # Registrasi user baru
+│   ├── auth.php            # Handler redirect & callback OAuth
 │   ├── user/               # Dashboard & generator untuk user
 │   │   ├── dashboard.php
 │   │   ├── generator.php
@@ -219,6 +238,10 @@ generator-web-uandangan/
 │       ├── users.php
 │       └── prompts.php
 └── assets/
-    ├── style.css           # Stylesheet (ikut tercommit)
+    ├── style.css           # Stylesheet halaman publik
+    ├── auth.css            # Stylesheet login & register (tema terang/gelap)
+    ├── theme.js            # Toggle tema terang/gelap
+    ├── theme-init.js       # Terapkan tema tersimpan sebelum render
+    ├── pw-toggle.js        # Toggle visibilitas password
     └── (*.jpg, *.png, *.mp3)  # File upload (tidak masuk git)
 

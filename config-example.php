@@ -5,8 +5,12 @@ define('DB_HOST', '127.0.0.1');
 define('DB_PORT', 3306);
 define('DB_USER', 'root');
 define('DB_PASS', '');
-define('DB_NAME', 'generator_web_undangan');
+define('DB_NAME', 'wedding_gen_db');
 define('BASE_URL', 'http://localhost');
+
+// Konfigurasi Supabase
+define('SUPABASE_URL', 'https://your-project.supabase.co');
+define('SUPABASE_KEY', 'your-supabase-publishable-key');
 
 $DB = null;
 
