@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../lib/auth.php';
+require_once __DIR__ . '/../../lib/storage.php';
 
 require_login();
 
@@ -11,22 +12,24 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 header('Content-Type: application/json');
 
-$dir = __DIR__ . '/../../assets/';
-if (!is_dir($dir)) {
-    mkdir($dir, 0777, true);
-}
-
 $imageExts = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png'];
 $audioExts = ['mp3' => 'audio/mpeg'];
 
 $errors = [];
 
-function saveUpload($field, $dir, $allowed, $base, $maxBytes, &$errors) {
+/**
+ * Validasi satu file upload lalu simpan lewat lib/storage.php (lokal / cloud).
+ * Mengembalikan URL file, atau '' kalau tidak ada file / gagal (alasannya masuk $errors).
+ */
+function saveUpload($field, $allowed, $maxBytes, &$errors) {
     if (empty($_FILES[$field])) {
         return '';
     }
     $file = $_FILES[$field];
 
+    if ($file['error'] === UPLOAD_ERR_NO_FILE) {
+        return '';
+    }
     if ($file['error'] !== UPLOAD_ERR_OK) {
         $map = [
             UPLOAD_ERR_INI_SIZE => 'File melebihi batas server (upload_max_filesize)',
@@ -49,25 +52,32 @@ function saveUpload($field, $dir, $allowed, $base, $maxBytes, &$errors) {
         return '';
     }
 
-    // more_entropy=true supaya nama file tidak bertabrakan saat beberapa file
-    // diupload nyaris bersamaan (ini penyebab bug foto saling menimpa sebelumnya)
-    $name = uniqid('', true) . '.' . $ext;
-    if (!move_uploaded_file($file['tmp_name'], $dir . $name)) {
-        $errors[$field] = 'Gagal memindahkan file ke folder assets (cek permission folder)';
+    // Untuk gambar: pastikan isinya benar-benar gambar (bukan file lain yang hanya diganti ekstensinya)
+    if (strpos($allowed[$ext], 'image/') === 0) {
+        $info = @getimagesize($file['tmp_name']);
+        if (!$info || !in_array($info['mime'], ['image/jpeg', 'image/png'], true)) {
+            $errors[$field] = 'File bukan gambar JPG/PNG yang valid';
+            return '';
+        }
+    }
+
+    $url = storage_put($file['tmp_name'], $ext);
+    if ($url === null) {
+        $errors[$field] = 'Gagal menyimpan file (cek permission folder assets atau pengaturan storage)';
         return '';
     }
-    return rtrim($base, '/') . '/assets/' . $name;
+    return $url;
 }
 
 $result = [
-    'heroImage'  => saveUpload('heroImageUpload', $dir, $imageExts, BASE_URL, 2 * 1024 * 1024, $errors),
-    'groomPhoto' => saveUpload('groomPhotoUpload', $dir, $imageExts, BASE_URL, 2 * 1024 * 1024, $errors),
-    'bridePhoto' => saveUpload('bridePhotoUpload', $dir, $imageExts, BASE_URL, 2 * 1024 * 1024, $errors),
+    'heroImage'  => saveUpload('heroImageUpload', $imageExts, 2 * 1024 * 1024, $errors),
+    'groomPhoto' => saveUpload('groomPhotoUpload', $imageExts, 2 * 1024 * 1024, $errors),
+    'bridePhoto' => saveUpload('bridePhotoUpload', $imageExts, 2 * 1024 * 1024, $errors),
     'gallery' => [],
-    'music' => saveUpload('musicUpload', $dir, $audioExts, BASE_URL, 5 * 1024 * 1024, $errors),
+    'music' => saveUpload('musicUpload', $audioExts, 5 * 1024 * 1024, $errors),
 ];
 for ($i = 1; $i <= 6; $i++) {
-    $result['gallery'][] = saveUpload('galleryUpload' . $i, $dir, $imageExts, BASE_URL, 2 * 1024 * 1024, $errors);
+    $result['gallery'][] = saveUpload('galleryUpload' . $i, $imageExts, 2 * 1024 * 1024, $errors);
 }
 
 $result['errors'] = $errors;
