@@ -319,3 +319,17 @@ dialog h3 { font-family: var(--font-display); margin-bottom: 16px; }
 .list-row .list-main { min-width: 0; font-weight: 500; color: var(--ink); text-decoration: none; }
 .list-row .list-main small { display: block; font-weight: 400; color: var(--muted); }
 .card-sub { color: var(--muted); font-size: .85rem; margin: 22px 0 4px; font-weight: 600; }
+
+/* ---------- Daftar undangan & form besar (Langkah 4) ---------- */
+.inv-list { display: grid; gap: 12px; }
+.inv { display: flex; justify-content: space-between; align-items: center; gap: 14px 20px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 20px; }
+.inv-main { flex: 1 1 260px; min-width: 0; }
+.inv-title { display: block; font-weight: 600; font-size: 1.05rem; color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
+.inv-title:hover { color: var(--accent); }
+.inv-sub { color: var(--muted); font-size: .88rem; margin: 2px 0 8px; overflow-wrap: anywhere; }
+.inv-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+.inv-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem; }
+textarea.tall { min-height: 24rem; }
+.danger-zone { border-color: #e7c0b4; }
+

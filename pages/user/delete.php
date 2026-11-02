@@ -1,49 +1,34 @@
 <?php
-require_once __DIR__ . '/../../config.php';
-require_once __DIR__ . '/../../lib/auth.php';
+require_once __DIR__ . '/../../lib/layout.php';
+require_once __DIR__ . '/../../lib/storage.php';
+require_user();
+require_post_csrf(url_user('undangan.php'));
 
-require_login();
+$db = getDB();
+$id = (int)($_POST['id'] ?? 0);
+$p  = owned_prompt($id);
 
-if (current_user()['role'] !== 'user') {
-    redirect(BASE_URL . '/pages/user/dashboard.php');
+if (!$p) {
+    msg_add('error', 'Undangan tidak ditemukan atau bukan milikmu.');
+    redirect(url_user('undangan.php'));
 }
 
-$error = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!csrf_check($_POST['csrf'] ?? '')) {
-        $error = 'Token tidak valid.';
-    } else {
-        $db = getDB();
-        $id = (int)($_POST['id'] ?? 0);
+/* Catat dulu file upload yang disebut di prompt ini (hanya yang polanya cocok dengan hasil upload.php). */
+$refs = storage_refs_in($p['prompt']);
 
-        // Fetch prompt dulu untuk hapus assets-nya
-        $fetch = $db->prepare("SELECT prompt FROM prompts WHERE id=? AND user_id=?");
-        $fetch->execute([$id, $_SESSION['user']['id']]);
-        $row = $fetch->fetch();
+/* Hapus undangan (RSVP dan ucapan ikut terhapus lewat ON DELETE CASCADE). */
+$db->prepare("DELETE FROM prompts WHERE id=? AND user_id=?")
+   ->execute([$id, (int)$_SESSION['user']['id']]);
 
-        if ($row) {
-            // Extract asset paths dari teks prompt
-            preg_match_all('~/assets/[a-z0-9]+\.[a-z]+~i', $row['prompt'], $matches);
-            if (!empty($matches[0])) {
-                $assetDir = __DIR__ . '/../../';
-                foreach ($matches[0] as $url) {
-                    $file = $assetDir . ltrim($url, '/');
-                    if (file_exists($file)) {
-                        unlink($file);
-                    }
-                }
-            }
-
-            $del = $db->prepare("DELETE FROM prompts WHERE id=? AND user_id=?");
-            $del->execute([$id, $_SESSION['user']['id']]);
-            flash('delete_success', 'Prompt berhasil dihapus.');
-        } else {
-            $error = 'Prompt tidak ditemukan atau bukan milikmu.';
-        }
+/* Hapus file, tetapi HANYA yang tidak dipakai undangan lain. Ini mencegah file milik pengguna lain
+   ikut terhapus walau namanya sengaja ditulis di teks prompt. */
+$used = $db->prepare("SELECT COUNT(*) FROM prompts WHERE prompt LIKE ?");
+foreach ($refs as $ref) {
+    $used->execute(['%' . $ref . '%']);
+    if ((int)$used->fetchColumn() === 0) {
+        storage_delete($ref);
     }
 }
 
-if ($error) {
-    flash('error', $error);
-}
-redirect(BASE_URL . '/pages/user/dashboard.php');
+msg_add('success', 'Undangan berhasil dihapus.');
+redirect(url_user('undangan.php'));
