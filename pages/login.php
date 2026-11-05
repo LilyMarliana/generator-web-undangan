@@ -22,6 +22,20 @@ foreach ($demoAccounts as [$name, $email, $pass, $role]) {
 }
 
 $error = '';
+
+// Handle demo auto-fill from landing page
+$demoEmail = '';
+$demoPass = '';
+if (isset($_GET['demo'])) {
+    if ($_GET['demo'] === 'admin') {
+        $demoEmail = 'admin@example.com';
+        $demoPass = 'admin123';
+    } elseif ($_GET['demo'] === 'user') {
+        $demoEmail = 'user@example.com';
+        $demoPass = 'user123';
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_check($_POST['csrf'] ?? '')) {
         $error = 'Token tidak valid. Coba lagi.';
@@ -66,34 +80,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="hidden" name="csrf" value="<?= csrf_token() ?>">
                 <div class="form-group">
                     <label for="email">Email:</label>
-                    <input type="email" id="email" name="email" required>
+                    <input type="email" id="email" name="email" value="<?= e($demoEmail) ?>" required>
                 </div>
                 <div class="form-group">
                     <label for="password">Password:</label>
-                    <input type="password" id="password" name="password" required>
+                    <input type="password" id="password" name="password" value="<?= e($demoPass) ?>" required>
                 </div>
                 <button type="submit" class="btn-primary btn-block">Login</button>
             </form>
 
-            <div class="demo-box">
-                <p>Akun Demo (Auto-fill):</p>
-                <div class="demo-buttons">
-                    <button type="button" class="btn-secondary" onclick="autofill('admin@example.com', 'admin123')">Login sebagai Admin</button>
-                    <button type="button" class="btn-secondary" onclick="autofill('user@example.com', 'user123')">Login sebagai Pengguna</button>
-                </div>
-            </div>
             <div class="auth-links">
                 Belum punya akun? <a href="register.php">Daftar di sini</a><br>
                 <a href="../index.php">Kembali ke Beranda</a>
             </div>
         </div>
     </div>
-
-    <script>
-    function autofill(email, pass) {
-        document.getElementById('email').value = email;
-        document.getElementById('password').value = pass;
-    }
-    </script>
 </body>
 </html>
