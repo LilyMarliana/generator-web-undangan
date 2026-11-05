@@ -220,7 +220,7 @@ if (isset($_GET['logout'])) {
 
     <footer class="site-footer" role="contentinfo">
         <div class="container">
-            <p>&copy; <?= date('Y') ?> Wedding Website Generator. Dibangun dengan PHP 8 + MySQL.</p>
+            <p>&copy; <?= date('Y') ?> PromptNikah. Dibangun dengan PHP 8 + MySQL.</p>
             <nav aria-label="Footer links">
                 <a href="<?= BASE_URL . '/pages/login.php' ?>">Login</a>
                 <a href="<?= BASE_URL . '/pages/register.php' ?>">Daftar</a>
