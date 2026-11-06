@@ -17,38 +17,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Token keamanan tidak valid. Silakan coba lagi.';
     } else {
         $name  = trim($_POST['name'] ?? '');
-        $email = trim($_POST['email'] ?? '');
+        $email = strtolower(trim($_POST['email'] ?? ''));
         $pass  = $_POST['password'] ?? '';
         $pass2 = $_POST['password_confirm'] ?? '';
 
         if ($name === '' || $email === '' || $pass === '') {
             $error = 'Semua field wajib diisi.';
+        } elseif (mb_strlen($name) > 100) {
+            $error = 'Nama maksimal 100 karakter.';
+        } elseif (strlen($email) > 150 || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $error = 'Format email tidak valid.';
         } elseif ($pass !== $pass2) {
             $error = 'Konfirmasi password tidak cocok.';
         } elseif (strlen($pass) < 6) {
             $error = 'Password minimal 6 karakter.';
-        } elseif (defined('SUPABASE_URL') && !empty(SUPABASE_URL)) {
-            $res = supabase_sign_up($email, $pass, ['name' => $name]);
-            if (isset($res['error'])) {
-                $error = $res['error'];
-            } else {
-                $db = getDB();
-                $stmt = $db->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, '', 'user')");
-                $stmt->execute([$name, $email]);
-                flash('register', 'Pendaftaran berhasil. Silakan login.');
-                redirect(BASE_URL . '/pages/login.php');
-            }
+        } elseif (strlen($pass) > 72) {
+            $error = 'Password maksimal 72 karakter.';
         } else {
             $db = getDB();
-            $chk = $db->prepare("SELECT id FROM users WHERE email=? LIMIT 1");
+            $chk = $db->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
             $chk->execute([$email]);
             if ($chk->fetch()) {
                 $error = 'Email sudah terdaftar.';
             } else {
-                $stmt = $db->prepare("INSERT INTO users (name,email,password,role) VALUES (?,?,?,'user')");
-                $stmt->execute([$name, $email, password_hash($pass, PASSWORD_DEFAULT)]);
-                flash('register', 'Pendaftaran berhasil. Silakan login.');
-                redirect(BASE_URL . '/pages/login.php');
+                try {
+                    if (defined('SUPABASE_URL') && !empty(SUPABASE_URL)) {
+                        $res = supabase_sign_up($email, $pass, ['name' => $name]);
+                        if (isset($res['error'])) {
+                            $error = $res['error'];
+                        } else {
+                            $db->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, '', 'user')")
+                               ->execute([$name, $email]);
+                        }
+                    } else {
+                        $db->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'user')")
+                           ->execute([$name, $email, password_hash($pass, PASSWORD_DEFAULT)]);
+                    }
+                    if ($error === '') {
+                        flash('register', 'Pendaftaran berhasil. Silakan login.');
+                        redirect(BASE_URL . '/pages/login.php');
+                    }
+                } catch (PDOException $ex) {
+                    error_log('register: ' . $ex->getMessage());
+                    $error = 'Pendaftaran gagal. Silakan coba lagi.';
+                }
             }
         }
     }
@@ -131,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label for="name">Nama Lengkap</label>
                     </div>
                     <div class="input-field-wrap">
-                        <input type="text" id="name" name="name" class="glass-input" placeholder="Nama Anda" required autocomplete="name" value="<?= e(trim($_POST['name'] ?? '')) ?>">
+                        <input type="text" id="name" name="name" class="glass-input" placeholder="Nama Anda" required maxlength="100" autocomplete="name" value="<?= e(trim($_POST['name'] ?? '')) ?>">
                     </div>
                 </div>
 
@@ -140,7 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label for="email">Alamat Email</label>
                     </div>
                     <div class="input-field-wrap">
-                        <input type="email" id="email" name="email" class="glass-input" placeholder="nama@email.com" required autocomplete="email" value="<?= e(trim($_POST['email'] ?? '')) ?>">
+                        <input type="email" id="email" name="email" class="glass-input" placeholder="nama@email.com" required maxlength="150" autocomplete="email" value="<?= e(trim($_POST['email'] ?? '')) ?>">
                     </div>
                 </div>
 
@@ -149,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label for="password">Kata Sandi (min. 6 karakter)</label>
                     </div>
                     <div class="input-field-wrap">
-                        <input type="password" id="password" name="password" class="glass-input pw-input" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+                        <input type="password" id="password" name="password" class="glass-input pw-input" placeholder="••••••••" required minlength="6" maxlength="72" autocomplete="new-password">
                         <button type="button" class="pw-btn" data-pw-toggle="password" aria-label="Tampilkan kata sandi">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></svg>
                         </button>
@@ -161,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label for="password_confirm">Konfirmasi Kata Sandi</label>
                     </div>
                     <div class="input-field-wrap">
-                        <input type="password" id="password_confirm" name="password_confirm" class="glass-input pw-input" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+                        <input type="password" id="password_confirm" name="password_confirm" class="glass-input pw-input" placeholder="••••••••" required minlength="6" maxlength="72" autocomplete="new-password">
                         <button type="button" class="pw-btn" data-pw-toggle="password_confirm" aria-label="Tampilkan kata sandi">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></svg>
                         </button>

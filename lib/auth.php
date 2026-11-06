@@ -6,10 +6,23 @@ function is_logged_in() {
     return !empty($_SESSION['user']);
 }
 
+/**
+ * Guard login. Role dan status aktif dicek ulang ke database di setiap request,
+ * jadi perubahan role / blokir dari admin langsung berlaku tanpa user perlu login ulang.
+ */
 function require_login() {
     if (!is_logged_in()) {
         redirect(BASE_URL . '/pages/login.php');
     }
+    $st = getDB()->prepare("SELECT role, is_active FROM users WHERE id = ? LIMIT 1");
+    $st->execute([(int)$_SESSION['user']['id']]);
+    $row = $st->fetch();
+    if (!$row || !(int)$row['is_active']) {
+        unset($_SESSION['user'], $_SESSION['supabase_token']);
+        flash('error', 'Akun kamu dinonaktifkan atau tidak ditemukan. Hubungi admin.');
+        redirect(BASE_URL . '/pages/login.php');
+    }
+    $_SESSION['user']['role'] = $row['role'];
 }
 
 function require_admin() {
@@ -24,6 +37,8 @@ function current_user() {
 }
 
 function attempt_login($email, $password, &$authError = null) {
+    $inactiveMsg = 'Akun kamu dinonaktifkan. Hubungi admin.';
+
     // 1. Jika Supabase dikonfigurasi, autentikasi via Supabase Auth
     if (defined('SUPABASE_URL') && defined('SUPABASE_KEY') && !empty(SUPABASE_URL) && !empty(SUPABASE_KEY)) {
         $res = supabase_sign_in($email, $password);
@@ -46,11 +61,17 @@ function attempt_login($email, $password, &$authError = null) {
             $stmt = $db->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, '', 'user')");
             $stmt->execute([$name, $email]);
             $user = [
-                'id'    => (int)$db->lastInsertId(),
-                'name'  => $name,
-                'email' => $email,
-                'role'  => 'user',
+                'id'        => (int)$db->lastInsertId(),
+                'name'      => $name,
+                'email'     => $email,
+                'role'      => 'user',
+                'is_active' => 1,
             ];
+        }
+
+        if (!(int)$user['is_active']) {
+            $authError = $inactiveMsg;
+            return null;
         }
 
         unset($user['password']);
@@ -65,6 +86,10 @@ function attempt_login($email, $password, &$authError = null) {
     $stmt->execute([$email]);
     $user = $stmt->fetch();
     if ($user && password_verify($password, $user['password'])) {
+        if (!(int)$user['is_active']) {
+            $authError = $inactiveMsg;
+            return null;
+        }
         unset($user['password']);
         $_SESSION['user'] = $user;
         return $user;

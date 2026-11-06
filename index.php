@@ -5,6 +5,12 @@ require_once __DIR__ . '/lib/auth.php';
 if (isset($_GET['logout'])) {
     logout();
 }
+
+// Supabase kadang mengembalikan login Google ke halaman utama (membawa ?code=...).
+// Teruskan ke handler OAuth, hanya kalau memang ada proses login Google yang sedang berjalan.
+if (!empty($_GET['code']) && is_string($_GET['code']) && !empty($_SESSION['oauth_code_verifier'])) {
+    redirect(BASE_URL . '/pages/auth.php?provider=' . urlencode($_SESSION['oauth_provider'] ?? 'google') . '&code=' . urlencode($_GET['code']));
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
