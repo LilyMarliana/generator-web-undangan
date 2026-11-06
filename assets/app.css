@@ -333,3 +333,24 @@ dialog h3 { font-family: var(--font-display); margin-bottom: 16px; }
 textarea.tall { min-height: 24rem; }
 .danger-zone { border-color: #e7c0b4; }
 
+/* ---------- RSVP & Ucapan (Langkah 5) ---------- */
+.bulkbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.check { display: inline-flex; align-items: center; gap: 8px; font-size: .9rem; cursor: pointer; }
+.check input, .tbl input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; }
+.tbl .msg { overflow-wrap: anywhere; }
+.wish-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.wish-msg { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink-soft); }
+.wish-hidden { background: #faf5ea; border-style: dashed; }
+.wish-hidden .wish-msg { opacity: .75; }
+@media (max-width: 700px) {
+    table.tbl.stack-sm { min-width: 0; }
+    .stack-sm thead { display: none; }
+    .stack-sm tbody tr { display: block; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+    .stack-sm tbody tr:last-child { border-bottom: 0; }
+    .stack-sm td { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; padding: 4px 0; border: 0; text-align: right; white-space: normal; }
+    .stack-sm td::before { content: attr(data-label); flex: none; font-size: .72rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); text-align: left; }
+    .stack-sm td.cell-actions { justify-content: flex-end; padding-top: 10px; }
+    .stack-sm td.cell-actions::before { content: none; }
+    .stack-sm td.msg { max-width: none; min-width: 0; }
+}
+
