@@ -14,13 +14,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $emailValue = trim($_POST['email'] ?? '');
         $pass = $_POST['password'] ?? '';
-        $user = attempt_login($emailValue, $pass);
+        $authErr = null;
+        $user = attempt_login($emailValue, $pass, $authErr);
         if ($user) {
             redirect(($user['role'] === 'admin')
                 ? BASE_URL . '/pages/admin/dashboard.php'
                 : BASE_URL . '/pages/user/dashboard.php');
         } else {
-            $error = 'Email atau password tidak sesuai.';
+            $error = $authErr ?: 'Email atau password tidak sesuai.';
         }
     }
 }

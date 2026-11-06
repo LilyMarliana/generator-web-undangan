@@ -1,6 +1,5 @@
 <?php
-require_once __DIR__ . '/../../config.php';
-require_once __DIR__ . '/../../lib/auth.php';
+require_once __DIR__ . '/../../lib/layout.php';
 
 require_login();
 
@@ -26,13 +25,13 @@ if ($title === '' || $prompt === '') {
     exit;
 }
 
-// Validasi panjang input (sesuaikan angka ini dengan definisi kolom di DB kamu)
-if (mb_strlen($title) > 255) {
-    echo json_encode(['success' => false, 'error' => 'Judul terlalu panjang (maks 255 karakter)']);
+// Batas panjang input (sesuai kolom DB: title VARCHAR(150), prompt TEXT maks 65.535 byte)
+if (mb_strlen($title) > 150) {
+    echo json_encode(['success' => false, 'error' => 'Judul terlalu panjang (maks 150 karakter)']);
     exit;
 }
-if (mb_strlen($prompt) > 20000) {
-    echo json_encode(['success' => false, 'error' => 'Prompt terlalu panjang']);
+if (strlen($prompt) > 60000) {
+    echo json_encode(['success' => false, 'error' => 'Prompt terlalu panjang (maks sekitar 60.000 karakter)']);
     exit;
 }
 
@@ -40,7 +39,7 @@ $db     = getDB();
 $today  = date('Y-m-d');
 $user   = current_user();
 $userId = $user['id'];
-$quota  = 5;
+$quota  = max(1, daily_quota());
 
 // Pastikan baris quota hari ini ada (aman kalau dipanggil bersamaan / concurrent)
 $db->prepare("INSERT IGNORE INTO quota_logs (user_id, date, count) VALUES (?, ?, 0)")
@@ -52,7 +51,7 @@ $stmt = $db->prepare("UPDATE quota_logs SET count = count + 1 WHERE user_id = ? 
 $stmt->execute([$userId, $today, $quota]);
 
 if ($stmt->rowCount() === 0) {
-    echo json_encode(['success' => false, 'error' => 'Limit harian tercapai (5x per hari). Silakan coba lagi besok.']);
+    echo json_encode(['success' => false, 'error' => 'Limit harian tercapai (' . $quota . 'x per hari). Silakan coba lagi besok.']);
     exit;
 }
 
@@ -113,8 +112,17 @@ if (strpos($prompt, '{{API_KEY}}') !== false) {
     $prompt .= $block;
 }
 
-$stmt = $db->prepare("INSERT INTO prompts (api_key, user_id, title, groom_name, bride_name, prompt) VALUES (?, ?, ?, ?, ?, ?)");
-$stmt->execute([$apiKey, $userId, $title, $groomName ?: null, $brideName ?: null, $prompt]);
+try {
+    $stmt = $db->prepare("INSERT INTO prompts (api_key, user_id, title, groom_name, bride_name, prompt) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$apiKey, $userId, $title, $groomName ?: null, $brideName ?: null, $prompt]);
+} catch (PDOException $ex) {
+    // Penyimpanan gagal: kembalikan kuota yang sudah terpakai supaya user tidak dirugikan
+    error_log('save prompt: ' . $ex->getMessage());
+    $db->prepare("UPDATE quota_logs SET count = GREATEST(count - 1, 0) WHERE user_id = ? AND date = ?")
+       ->execute([$userId, $today]);
+    echo json_encode(['success' => false, 'error' => 'Gagal menyimpan prompt. Silakan coba lagi.']);
+    exit;
+}
 
 echo json_encode([
     'success'   => true,

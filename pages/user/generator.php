@@ -266,7 +266,7 @@ app_header('Buat Undangan', 'generator', [
 
                 <div class="wizard-step" data-step="5" style="display:none;">
                     <h2 class="step-title">Review &amp; Generate</h2>
-                    <p class="step-desc">Semua data sudah lengkap. Klik tombol di bawah untuk membuat prompt-nya — otomatis tersimpan ke Dashboard begitu selesai.</p>
+                    <p class="step-desc">Semua data sudah lengkap. Klik tombol di bawah untuk membuat prompt-nya — otomatis tersimpan dan kamu langsung diarahkan ke halaman detail undangan.</p>
 
                     <div class="wizard-nav">
                         <button type="button" class="btn-outline" onclick="goToStep(4)">Kembali</button>
@@ -453,7 +453,8 @@ app_header('Buat Undangan', 'generator', [
         fetch('save.php', {method:'POST', body:formData})
             .then(r=>r.json()).then(d=> {
                 if (d.success) {
-                    window.location.href = 'dashboard.php';
+                    // Langsung ke halaman detail undangan yang baru dibuat
+                    window.location.href = 'detail.php?id=' + encodeURIComponent(d.id);
                 } else {
                     alert('Gagal menyimpan: ' + d.error);
                 }
@@ -619,6 +620,33 @@ Panduan visual & animasi (terapkan semua, ini bagian penting bukan sekadar tempe
 - Batasi lebar maksimum konten (misal max-width: 1200px untuk container utama, max-width: 800px untuk blok teks seperti cerita cinta) dan tetap center secara horizontal (margin: 0 auto), supaya di layar desktop/monitor besar teks dan foto tidak melebar penuh ke tepi layar yang bikin sulit dibaca.
 - Semua tombol dan elemen interaktif (termasuk tombol di form RSVP, tombol copy rekening, dsb) harus punya ukuran minimum yang nyaman disentuh di mobile (minimum tinggi/lebar sekitar 44px), jangan terlalu kecil sehingga sulit di-tap di layar sentuh.
 
+Panduan tipografi & sistem warna (WAJIB):
+- Definisikan palet warna sebagai CSS variables di :root (minimal: --color-primary, --color-secondary, --color-accent, --color-bg, --color-surface, --color-text, --color-muted) yang diturunkan dari Tema Warna "${colorTheme}", lalu pakai variabel itu di SELURUH stylesheet — jangan menulis kode warna hex berulang-ulang di banyak tempat.
+- Rasio kontras teks terhadap background minimal 4.5:1 (teks biasa) dan 3:1 (teks besar). Jangan taruh teks terang di atas background terang atau sebaliknya; kalau teks berada di atas foto, wajib pakai overlay gradient supaya tetap terbaca.
+- Pakai MAKSIMAL 2 keluarga font dari Google Fonts: satu font display/dekoratif untuk nama pengantin & judul section, satu font bersih untuk body text. Pilih pasangan yang paling cocok dengan Gaya Visual "${visualStyle}" (arah umum: elegan/klasik = serif seperti Playfair Display atau Cormorant Garamond + sans seperti Lato; modern/minimalis = sans geometris seperti Montserrat atau Poppins + serif tipis; romantis/floral/whimsical = font script seperti Great Vibes atau Dancing Script untuk nama saja + serif/sans lembut untuk body; rustic/bohemian = serif hangat atau handwriting + sans sederhana; dark/moody/art deco = display serif tegas atau font geometris + sans ringan). Font script HANYA untuk nama dan judul pendek, JANGAN untuk paragraf.
+- Muat font lewat satu tag link Google Fonts dengan preconnect ke fonts.googleapis.com dan fonts.gstatic.com serta parameter display=swap, lalu beri fallback font-family generik (serif / sans-serif).
+- Line-height body 1.6-1.8, ukuran body minimal 16px, lebar baris teks nyaman dibaca (maks sekitar 65-75 karakter).
+
+Struktur halaman, navigasi & gaya bahasa (WAJIB):
+- Susun section dengan alur seperti undangan sungguhan: cover (bila diminta), hero, kalimat/quote pembuka, nama orang tua & mempelai, cerita cinta, acara/countdown, lokasi, galeri, wedding gift, RSVP, ucapan, lalu footer penutup — HANYA untuk elemen yang ada di daftar "Elemen yang harus ada". Lewati yang tidak dipilih tanpa meninggalkan ruang kosong.
+- Link navbar HANYA mengarah ke section yang benar-benar dibuat. Pakai scroll-behavior: smooth dan scroll-margin-top pada tiap section supaya judulnya tidak tertutup navbar sticky. Di mobile navbar cukup ringkas (hamburger atau ikon), jangan memenuhi layar.
+- Pakai data yang diberikan PERSIS apa adanya (ejaan nama, gelar, tanggal, jam, lokasi, link). Jangan mengarang data baru seperti alamat, nama, tanggal, atau nomor.
+- Tulis teks pengantar yang singkat, hangat, dan sopan dalam Bahasa Indonesia untuk tiap section (jangan hanya judul kosong). Pakai salam pembuka/penutup yang netral dan sopan; jangan mengasumsikan agama tertentu kecuali tampak dari quote/ayat pembuka yang diberikan.
+- Akhiri halaman dengan footer tipis (BUKAN section fungsional baru): kalimat terima kasih singkat, nama kedua pengantin, dan tahun. Jangan menambah menu atau fitur lain.
+
+Aksesibilitas & performa (WAJIB):
+- Semua gambar punya atribut alt yang deskriptif (misal "Foto pengantin pria ${groomName}"). Ornamen dekoratif murni diberi alt kosong atau aria-hidden="true".
+- Pakai elemen semantik (header, nav, main, section yang punya heading, footer) dan hanya satu h1.
+- Hormati preferensi pengguna: bungkus animasi/parallax/floating dengan '@media (prefers-reduced-motion: reduce)' yang mematikan atau menyederhanakannya.
+- Semua elemen interaktif punya state ':focus-visible' yang jelas (outline) supaya bisa dipakai dengan keyboard.
+- Foto di bawah fold (galeri, dst.) memakai loading="lazy" dan decoding="async"; foto hero JANGAN lazy supaya cepat tampil. Beri width/height atau aspect-ratio agar layout tidak melompat saat foto dimuat.
+- Animasi hanya memakai transform dan opacity (bukan top/left/width yang memicu reflow) supaya tetap mulus di HP kelas menengah.
+
+Tampilan saat link dibagikan (WAJIB di <head>):
+- <title> berisi nama kedua pengantin dan kata "Undangan Pernikahan", meta description singkat berisi nama dan tanggal acara, meta viewport, dan meta theme-color sesuai warna utama tema.
+- Tag Open Graph (og:title, og:description, og:type=website, og:image memakai foto hero/foto mempelai bila ada) dan twitter:card=summary_large_image, supaya pratinjau link di WhatsApp/Instagram tampil rapi.
+- Tambahkan favicon sederhana berupa SVG data URI (misal ikon hati atau cincin) supaya tab browser tidak kosong.
+
 Catatan penting: larangan "jangan tambah elemen di luar daftar" nanti HANYA berlaku untuk section/fitur fungsional (misal jangan bikin section galeri kalau tidak diminta). Elemen dekoratif/visual seperti animasi, ornamen, tekstur, efek hover tetap sangat dianjurkan dan bebas ditambahkan untuk memperkaya tampilan.
 
 Detail Pernikahan:
@@ -706,9 +734,33 @@ ${openingQuote ? 'Quote / Ayat Pembuka:\n"' + openingQuote + '"\n\n' : ''}Websit
                         + '\n  WAJIB: beri kartu ini lebar maksimum tetap (misal max-width: 420px) dan tetap di-center secara horizontal & vertikal (contoh: flexbox dengan justify-content/align-items: center pada overlay pembungkusnya) di SEMUA ukuran layar — mobile, tablet, MAUPUN desktop. Bentuknya harus SELALU berupa satu kartu vertikal tunggal yang sama persis proporsinya di layar manapun (hanya ukurannya yang boleh menyesuaikan lewat clamp(), bukan strukturnya) — JANGAN biarkan kartu ini berubah jadi melebar penuh, terbelah dua kolom, atau elemen di dalamnya (nama tamu, judul, tombol) jadi sejajar menyamping saat layar melebar ke tablet/desktop. Sisa area viewport di luar kartu (kiri-kanan pada layar lebar) cukup diisi background polos/blur/dekorasi tema, BUKAN konten tambahan.'
                         + '\n  Nama tamu WAJIB diambil otomatis dari parameter URL memakai `new URLSearchParams(window.location.search).get(\'to\')` (contoh link: ?to=Budi) — kalau parameter kosong/tidak ada, tampilkan fallback teks "Tamu Undangan".'
                         + '\n  Selama cover ini tampil, set `document.body.style.overflow = \'hidden\'` supaya user tidak bisa scroll melihat konten di baliknya. Saat tombol "Buka Undangan" diklik: sembunyikan cover dengan animasi fade-out/slide-up halus, lalu kembalikan `document.body.style.overflow = \'\'` supaya halaman utama bisa di-scroll normal.'
+                        + '\n  Nama tamu dari URL WAJIB ditampilkan lewat textContent (bukan innerHTML) supaya aman dari injeksi HTML, dan dipangkas maksimal sekitar 60 karakter.'
                         + (hasMusicElement
                             ? '\n  PENTING: panggil `audio.play()` untuk Background music PERSIS di dalam event handler klik tombol "Buka Undangan" ini (bukan di window.onload), karena browser modern memblokir autoplay audio tanpa interaksi user — klik tombol ini dipakai sebagai pemicu sah untuk memulai musik.'
                             : '');
+                }
+
+                // ====== Spesifikasi detail per elemen ======
+                if (element === 'Countdown timer') {
+                    prompt += '\n  Hitung mundur menuju Akad Nikah dengan waktu target ' + akadDate + 'T' + akadTime + ':00 (waktu lokal perangkat; buat objek Date dari string ini). Tampilkan 4 kotak berlabel Hari, Jam, Menit, Detik dengan angka 2 digit (padStart), diperbarui tiap 1 detik lewat setInterval. Kalau target sudah lewat: hentikan interval dan tampilkan teks hangat seperti "Hari bahagia telah tiba" (JANGAN pernah menampilkan angka negatif atau NaN). Beri aria-hidden="true" pada angka yang berubah tiap detik dan sediakan satu teks ringkas untuk pembaca layar (misal "Menuju hari pernikahan").';
+                }
+                if (element === 'Susunan Acara') {
+                    prompt += '\n  Tampilkan sebagai timeline vertikal: garis penghubung, titik penanda per kegiatan, jam dibuat menonjol (tebal) di satu sisi dan nama kegiatan di sisi lainnya, muncul bertahap saat discroll. Di mobile tetap 1 kolom yang rapi.';
+                }
+                if (element === 'Dress Code') {
+                    prompt += '\n  Tampilkan sebagai kartu terpusat berisi ornamen kecil, teks keterangan, dan — bila keterangan menyebut warna — deretan swatch lingkaran warna yang sesuai supaya tamu langsung paham. Kalau ada warna yang diminta untuk dihindari, tandai swatch-nya dengan coretan/silang dan label singkat.';
+                }
+                if (element === 'Google Maps lokasi') {
+                    prompt += '\n  Sediakan tombol besar "Buka di Google Maps" (target="_blank", rel="noopener noreferrer") yang membuka link di atas, dan tampilkan juga nama/alamat lokasi akad' + (hasResepsi ? ' dan resepsi' : '') + ' sebagai teks. JANGAN membuat iframe peta dengan URL karangan sendiri.';
+                }
+                if (element === 'Wedding gift') {
+                    prompt += '\n  Tiap rekening tampil sebagai kartu sendiri berisi nama bank, nomor rekening (angka jelas, font monospace), nama pemilik, dan tombol "Salin Nomor" (minimal 44px). Tombol memakai navigator.clipboard.writeText dengan fallback document.execCommand("copy"), lalu teksnya berubah menjadi "Tersalin!" selama sekitar 2 detik. Tambahkan satu kalimat sopan bahwa hadiah bersifat opsional dan kehadiran tamu adalah hadiah terbaik.';
+                }
+                if (element === 'Sosial media') {
+                    prompt += '\n  Tampilkan sebagai tombol/ikon bulat dengan ikon SVG inline (bukan gambar dari situs lain) yang membuka profil di tab baru (Instagram: https://instagram.com/USERNAME, TikTok: https://tiktok.com/@USERNAME, tanpa tanda @ ganda), dengan rel="noopener noreferrer" dan aria-label yang jelas.';
+                }
+                if (element === 'Background music') {
+                    prompt += '\n  Sediakan tombol putar/jeda melayang (floating) yang selalu terlihat di pojok layar (minimal 44px). Ikon berganti antara play dan pause, ikon berputar halus saat musik menyala, audio memakai loop, dan kalau pemutaran gagal jangan munculkan error — cukup tampilkan status jeda.';
                 }
             });
         }
@@ -719,7 +771,7 @@ ${openingQuote ? 'Quote / Ayat Pembuka:\n"' + openingQuote + '"\n\n' : ''}Websit
         const hasWish = selectedElements.includes('Ucapan dari tamu');
 
         if (hasRSVP || hasWish) {
-            prompt += '\n\nAPI Endpoints untuk RSVP dan Ucapan Tamu:\n- API Key: {{API_KEY}}\n- Base URL: ' + baseUrl + '/api.php\n\nFormat Response API:\n- Semua response berformat JSON: { "success": true/false, "data": [...], "error": "pesan error" }\n- Untuk mengecek apakah request berhasil, gunakan: if (response.ok && data.success)\n\nContoh kode JavaScript yang benar (WAJIB ikuti pola ini):\n  async function submitRSVP(payload) {\n      const response = await fetch(`${BASE_URL}?action=rsvp&api_key=${API_KEY}`, {\n          method: \'POST\',\n          headers: { \'Content-Type\': \'application/json\' },\n          body: JSON.stringify(payload)\n      });\n      const data = await response.json();\n      if (!response.ok || !data.success) {\n          showToast(\'Gagal mengirim: \' + (data.error || \'Terjadi kesalahan\'), true);\n          return;\n      }\n      showToast(\'Berhasil dikirim!\');\n      fetchWishes(); // Refresh list\n  }\n\nContoh fetch data (GET):\n  async function fetchWishes() {\n      const res = await fetch(`${BASE_URL}?action=wish&api_key=${API_KEY}`);\n      const data = await res.json();\n      if (res.ok && data.success && Array.isArray(data.data)) {\n          renderWishes(data.data);\n      }\n  }\n\n- Setelah POST RSVP/Wish berhasil, panggil ulang GET untuk refresh data\n- Gunakan escapeHtml() pada semua teks dari user (XSS protection)\n- Tampilkan toast error (bukan hanya toast sukses) jika gagal\n- Jangan gunakan localStorage fallback — semua data harus ke API\n- Pastikan API key yang digunakan adalah api_key yang benar (check console untuk debugging)';
+            prompt += '\n\nAPI Endpoints untuk RSVP dan Ucapan Tamu:\n- API Key: {{API_KEY}}\n- Base URL: ' + baseUrl + '/api.php\n\nFormat Response API:\n- Semua response berformat JSON: { "success": true/false, "data": [...], "error": "pesan error" }\n- Untuk mengecek apakah request berhasil, gunakan: if (response.ok && data.success)\n\nContoh kode JavaScript yang benar (WAJIB ikuti pola ini):\n  async function submitRSVP(payload) {\n      const response = await fetch(`${BASE_URL}?action=rsvp&api_key=${API_KEY}`, {\n          method: \'POST\',\n          headers: { \'Content-Type\': \'application/json\' },\n          body: JSON.stringify(payload)\n      });\n      const data = await response.json();\n      if (!response.ok || !data.success) {\n          showToast(\'Gagal mengirim: \' + (data.error || \'Terjadi kesalahan\'), true);\n          return;\n      }\n      showToast(\'Berhasil dikirim!\');\n      fetchWishes(); // Refresh list\n  }\n\nContoh fetch data (GET):\n  async function fetchWishes() {\n      const res = await fetch(`${BASE_URL}?action=wish&api_key=${API_KEY}`);\n      const data = await res.json();\n      if (res.ok && data.success && Array.isArray(data.data)) {\n          renderWishes(data.data);\n      }\n  }\n\n- Setelah POST RSVP/Wish berhasil, panggil ulang GET untuk refresh data\n- Gunakan escapeHtml() pada semua teks dari user (XSS protection)\n- Tampilkan toast error (bukan hanya toast sukses) jika gagal\n- Jangan gunakan localStorage fallback — semua data harus ke API\n- Pastikan API key yang digunakan adalah api_key yang benar (check console untuk debugging)\n\nPerilaku form (WAJIB untuk RSVP dan Ucapan):\n- Validasi di sisi klien sebelum mengirim: nama wajib (maks 100 karakter), pesan wajib untuk Ucapan (maks 1000 karakter), jumlah tamu angka 1-50. Tampilkan pesan error singkat di dekat field yang salah, bukan alert().\n- Saat request berjalan: nonaktifkan tombol kirim dan ubah teksnya menjadi "Mengirim..." supaya tidak terkirim dobel; kembalikan ke normal di blok finally. Setelah sukses, kosongkan form.\n- Saat daftar sedang dimuat tampilkan teks "Memuat..."; kalau daftar kosong tampilkan ajakan ramah (misal "Jadilah yang pertama memberi ucapan"); kalau gagal memuat tampilkan pesan error dengan tombol "Coba lagi".\n- Kalau API membalas error (termasuk pembatasan kirim berulang / anti-spam), tampilkan isi data.error apa adanya lewat toast.';
 
             if (hasRSVP) {
                 prompt += '\n\nPastikan website memiliki Form RSVP (input nama, pilihan kehadiran, jumlah tamu, catatan) dengan data disimpan via API.\nPENTING soal value kehadiran: value yang dikirim ke API pada field "attending" WAJIB persis salah satu dari tiga string berikut (huruf kecil semua, pakai underscore): hadir, tidak_hadir, belum_pasti — JANGAN kirim teks bebas seperti "Hadir" atau "Ya", karena API akan menolak/menganggap tidak valid selain 3 value itu. Kalau pakai <select>, isi atribut value dengan salah satu dari 3 string itu, dan tampilkan label yang mudah dibaca terpisah dari value-nya.\nTampilkan juga daftar RSVP yang sudah masuk (nama, status kehadiran, jumlah tamu, catatan) di halaman ini dalam bentuk list/card, diambil secara real-time dari GET action=rsvp. Panggil endpoint GET ini saat halaman pertama kali dimuat DAN setiap kali setelah submit RSVP berhasil, supaya daftar langsung ter-update tanpa refresh manual.';
@@ -728,6 +780,9 @@ ${openingQuote ? 'Quote / Ayat Pembuka:\n"' + openingQuote + '"\n\n' : ''}Websit
                 prompt += '\nPastikan website memiliki Kolom Ucapan (input nama, textarea pesan) dan tampilan daftar ucapan yang diambil secara real-time dari GET endpoint action=wish. Panggil endpoint ini saat halaman pertama kali dimuat DAN setiap kali setelah submit ucapan berhasil, supaya daftar ucapan langsung ter-update tanpa refresh manual. Tampilkan dalam bentuk list/card yang rapi, urutkan dari yang terbaru.';
             }
         }
+
+        // Daftar periksa akhir (ditaruh paling akhir supaya jadi hal terakhir yang dibaca AI)
+        prompt += '\n\nSebelum memberikan jawaban akhir, periksa ulang dan pastikan semuanya terpenuhi:\n1. Semua elemen di daftar "Elemen yang harus ada" sudah dibuat, dan tidak ada elemen fungsional lain.\n2. Tidak ada horizontal scroll dan tidak ada teks terpotong di lebar 375px, 768px, dan 1440px.\n3. Semua link/URL file yang diberikan (foto, musik, maps) dipakai persis, tidak diganti placeholder.\n4. Tidak ada teks Lorem ipsum atau placeholder; seluruh teks memakai data di atas dalam Bahasa Indonesia yang sopan dan hangat.\n5. Semua tombol dan interaksi berfungsi dan tidak ada error di console.\n6. Kontras teks terbaca, dan animasi dikurangi saat prefers-reduced-motion aktif.\n7. Jawaban berisi HANYA satu file HTML lengkap dalam satu blok kode, tanpa penjelasan panjang di luar kode.';
 
         document.getElementById('resultText').textContent = prompt;
         document.getElementById('resultContainer').style.display = 'block';

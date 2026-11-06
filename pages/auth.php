@@ -44,11 +44,18 @@ if (!empty($_GET['code'])) {
         $stmt = $db->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, '', 'user')");
         $stmt->execute([$name, $email]);
         $user = [
-            'id'    => (int)$db->lastInsertId(),
-            'name'  => $name,
-            'email' => $email,
-            'role'  => 'user',
+            'id'        => (int)$db->lastInsertId(),
+            'name'      => $name,
+            'email'     => $email,
+            'role'      => 'user',
+            'is_active' => 1,
         ];
+    }
+
+    // Akun yang dinonaktifkan admin tidak boleh masuk lewat Google
+    if (!(int)$user['is_active']) {
+        flash('error', 'Akun kamu dinonaktifkan. Hubungi admin.');
+        redirect(BASE_URL . '/pages/login.php');
     }
 
     unset($user['password']);
