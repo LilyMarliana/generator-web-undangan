@@ -2,6 +2,10 @@ assets/*.jpg
 assets/*.jpeg
 assets/*.png
 assets/*.mp3
+!assets/logo.png
+!assets/logo-symbol.png
+!assets/logo-wordmark.png
+!assets/favicon.png
 hasil
 /config.php
 
