@@ -14,7 +14,7 @@ function require_login() {
     if (!is_logged_in()) {
         redirect(BASE_URL . '/pages/login.php');
     }
-    $st = getDB()->prepare("SELECT role, is_active FROM users WHERE id = ? LIMIT 1");
+    $st = getDB()->prepare("SELECT role, is_active, plan, subscription_expires_at FROM users WHERE id = ? LIMIT 1");
     $st->execute([(int)$_SESSION['user']['id']]);
     $row = $st->fetch();
     if (!$row || !(int)$row['is_active']) {
@@ -23,6 +23,8 @@ function require_login() {
         redirect(BASE_URL . '/pages/login.php');
     }
     $_SESSION['user']['role'] = $row['role'];
+    $_SESSION['user']['plan'] = $row['plan'];
+    $_SESSION['user']['subscription_expires_at'] = $row['subscription_expires_at'];
 }
 
 function require_admin() {

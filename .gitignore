@@ -4,6 +4,7 @@ assets/*.png
 assets/*.mp3
 hasil
 /config.php
+/vendor
 
 CLAUDE.md
 /.claude
