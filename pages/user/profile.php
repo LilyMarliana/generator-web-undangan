@@ -50,8 +50,15 @@ $nRsvp   = $q("SELECT COUNT(*) FROM rsvps r JOIN prompts p ON p.id=r.prompt_id W
 $nGuests = $q("SELECT COALESCE(SUM(r.guests),0) FROM rsvps r JOIN prompts p ON p.id=r.prompt_id WHERE p.user_id=? AND r.attending='hadir'");
 $nWish   = $q("SELECT COUNT(*) FROM wishes w JOIN prompts p ON p.id=w.prompt_id WHERE p.user_id=?");
 $used    = $q("SELECT COALESCE(SUM(`count`),0) FROM quota_logs WHERE user_id=? AND `date`=CURDATE()");
-$quota   = daily_quota();
-$pct     = min(100, round($used / max(1, $quota) * 100));
+
+// daily_quota() bernilai angka (paket Free) atau null (paket Pro = tanpa batas harian)
+$quota     = daily_quota();
+$unlimited = ($quota === null);
+$pct       = $unlimited ? 0 : min(100, round($used / max(1, $quota) * 100));
+
+// Informasi paket (aman dipanggil sebelum/sesudah fitur Pro tersedia)
+$isPro    = function_exists('has_active_pro') && has_active_pro();
+$proUntil = $_SESSION['user']['subscription_expires_at'] ?? null;
 
 app_header('Profil', 'profile', ['subtitle' => 'Kelola data akun dan lihat ringkasan penggunaanmu.']);
 ?>
@@ -65,14 +72,17 @@ app_header('Profil', 'profile', ['subtitle' => 'Kelola data akun dan lihat ringk
 .pf input[disabled]{background:var(--bg);color:var(--muted)}
 .pf .btn{margin-top:18px}
 .qbar{height:10px;border-radius:99px;background:var(--line);overflow:hidden;margin:10px 0 6px}
-.qbar i{display:block;height:100%;background:var(--accent);border-radius:99px;width:<?= $pct ?>%}
+.qbar i{display:block;height:100%;background:var(--accent);border-radius:99px;width:<?= (int)$pct ?>%}
 </style>
 
 <section class="card pf-hero">
     <span class="pf-av"><?= e(strtoupper(mb_substr($me['name'], 0, 1))) ?></span>
     <div>
-        <h2><?= e($me['name']) ?></h2>
+        <h2><?= e($me['name']) ?><?= $isPro ? ' <span class="badge b-ok">Pro</span>' : '' ?></h2>
         <p class="small muted"><?= e($me['email']) ?> · Bergabung <?= e(fmt_date($me['created_at'], false)) ?></p>
+        <?php if ($isPro && is_string($proUntil)): ?>
+            <p class="small muted">Paket Pro aktif sampai <?= e(fmt_date($proUntil, false)) ?></p>
+        <?php endif; ?>
     </div>
 </section>
 
@@ -98,9 +108,14 @@ app_header('Profil', 'profile', ['subtitle' => 'Kelola data akun dan lihat ringk
 
     <section class="card">
         <h2 class="card-title">Kuota harian</h2>
-        <p class="small muted">Terpakai <?= $used ?> dari <?= $quota ?> generate hari ini. Kuota kembali penuh setiap pergantian hari.</p>
-        <div class="qbar"><i></i></div>
-        <p class="small muted"><?= max(0, $quota - $used) ?> generate tersisa</p>
+        <?php if ($unlimited): ?>
+            <p class="small muted">Paket Pro: generate tanpa batas harian.</p>
+            <p class="small muted">Sudah dipakai hari ini: <?= $used ?> generate</p>
+        <?php else: ?>
+            <p class="small muted">Terpakai <?= $used ?> dari <?= (int)$quota ?> generate hari ini. Kuota kembali penuh setiap pergantian hari.</p>
+            <div class="qbar"><i></i></div>
+            <p class="small muted"><?= max(0, (int)$quota - $used) ?> generate tersisa</p>
+        <?php endif; ?>
 
         <h2 class="card-title" style="margin-top:26px">Keamanan</h2>
         <?php if ($hasPass): ?>
