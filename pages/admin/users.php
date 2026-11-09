@@ -5,7 +5,10 @@ require_admin();
 $db = getDB();
 $me = (int)$_SESSION['user']['id'];
 
-$q = is_string($_GET['q'] ?? null) ? trim($_GET['q']) : '';
+$q      = is_string($_GET['q'] ?? null) ? trim($_GET['q']) : '';
+$roleF  = (is_string($_GET['role'] ?? null) && in_array($_GET['role'], ['user', 'admin'], true)) ? $_GET['role'] : '';
+$statF  = (is_string($_GET['status'] ?? null) && in_array($_GET['status'], ['aktif', 'nonaktif'], true)) ? $_GET['status'] : '';
+
 $where  = '1=1';
 $params = [];
 if ($q !== '') {
@@ -13,6 +16,9 @@ if ($q !== '') {
     $where .= " AND (u.name LIKE ? OR u.email LIKE ?)";
     array_push($params, $like, $like);
 }
+if ($roleF !== '') { $where .= " AND u.role = ?"; $params[] = $roleF; }
+if ($statF !== '') { $where .= " AND u.is_active = ?"; $params[] = ($statF === 'aktif') ? 1 : 0; }
+$filtered = ($q !== '' || $roleF !== '' || $statF !== '');
 
 $st = $db->prepare("SELECT COUNT(*) FROM users u WHERE $where");
 $st->execute($params);
@@ -31,19 +37,29 @@ $st->execute($params);
 $users = $st->fetchAll();
 
 app_header('Pengguna', 'users', [
-    'subtitle' => 'Kelola peran dan status akun pengguna (' . $total . ' total).',
+    'subtitle' => 'Kelola peran dan status akun pengguna (' . $total . ($filtered ? ' hasil' : ' total') . ').',
 ]);
 ?>
 <form class="toolbar" method="get">
     <input type="search" name="q" value="<?= e($q) ?>" placeholder="Cari nama atau email" maxlength="100">
-    <button class="btn-outline" type="submit">Cari</button>
-    <?php if ($q !== ''): ?><a class="btn-outline" href="users.php">Reset</a><?php endif; ?>
+    <select name="role" aria-label="Filter peran">
+        <option value="">Semua peran</option>
+        <option value="user"<?= $roleF === 'user' ? ' selected' : '' ?>>User</option>
+        <option value="admin"<?= $roleF === 'admin' ? ' selected' : '' ?>>Admin</option>
+    </select>
+    <select name="status" aria-label="Filter status">
+        <option value="">Semua status</option>
+        <option value="aktif"<?= $statF === 'aktif' ? ' selected' : '' ?>>Aktif</option>
+        <option value="nonaktif"<?= $statF === 'nonaktif' ? ' selected' : '' ?>>Nonaktif</option>
+    </select>
+    <button class="btn-outline" type="submit">Terapkan</button>
+    <?php if ($filtered): ?><a class="btn-outline" href="users.php">Reset</a><?php endif; ?>
 </form>
 
 <?php if (!$users): ?>
     <div class="card empty"><p>Tidak ada pengguna ditemukan.</p></div>
 <?php else: ?>
-    <div class="card">
+    <div class="card flush">
         <div class="table-wrap">
             <table class="tbl">
                 <thead>
