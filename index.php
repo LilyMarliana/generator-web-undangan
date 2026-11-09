@@ -14,10 +14,9 @@ if (!empty($_GET['code']) && is_string($_GET['code']) && !empty($_SESSION['oauth
 
 /* ------------------------------------------------------------------
  * PENGATURAN LANDING PAGE
- * Ubah harga & batas paket di sini saja — semua tampilan ikut berubah.
- * CATATAN: angka paket Pro di bawah adalah USULAN (placeholder).
- * Sistem kuota di backend (lib/layout.php → daily_quota()) saat ini
- * masih 5/hari untuk semua user, jadi Pro belum benar-benar diberlakukan.
+ * Angka paket mengikuti sistem pembayaran: Free 5 prompt/hari,
+ * Pro Rp18.000 untuk 30 hari dengan prompt tanpa batas harian.
+ * Jika harga di lib/payment.php (PRO_PRICE) berubah, ubah juga di sini.
  * ------------------------------------------------------------------ */
 $PLAN_FREE = [
     'price'  => 'Rp0',
@@ -27,11 +26,11 @@ $PLAN_FREE = [
     'music'  => '5 MB',
 ];
 $PLAN_PRO = [
-    'price'  => 'Rp49rb',
-    'period' => '/ bulan',
-    'quota'  => 50,
-    'photo'  => '10 MB',
-    'music'  => '15 MB',
+    'price'  => 'Rp18.000',
+    'period' => '/ 30 hari',
+    'quota'  => 'Tanpa batas',
+    'photo'  => '2 MB',
+    'music'  => '5 MB',
 ];
 
 $loggedIn  = is_logged_in();
@@ -135,7 +134,7 @@ $jsVer     = @filemtime(__DIR__ . '/assets/landing.js') ?: time();
                             <div class="inv-scroll">
                                 <div class="inv-cover">
                                     <p class="inv-small">THE WEDDING OF</p>
-                                    <p class="inv-names">Raka <span>&amp;</span> Sinta</p>
+                                    <p class="inv-names">Marliana <span>&amp;</span> Choi Seungcheol</p>
                                     <p class="inv-date">Sabtu, 14 Februari 2027</p>
                                     <div class="inv-open">Buka Undangan</div>
                                 </div>
@@ -224,8 +223,8 @@ $jsVer     = @filemtime(__DIR__ . '/assets/landing.js') ?: time();
                             <div class="env-card" id="envCard">
                                 <div class="panel on" data-i="0">
                                     <p class="p-title">Data Pernikahan</p>
-                                    <div class="field"><label>Mempelai pria</label><b data-type="Raka Pratama">Raka Pratama</b></div>
-                                    <div class="field"><label>Mempelai wanita</label><b data-type="Sinta Maharani">Sinta Maharani</b></div>
+                                    <div class="field"><label>Mempelai pria</label><b data-type="Choi Seungcheol">Choi Seungcheol</b></div>
+                                    <div class="field"><label>Mempelai wanita</label><b data-type="Marliana">Marliana</b></div>
                                     <div class="field-row">
                                         <div class="field"><label>Akad</label><b>14 Feb 2027</b></div>
                                         <div class="field"><label>Jam</label><b>09.00</b></div>
@@ -279,8 +278,7 @@ $jsVer     = @filemtime(__DIR__ . '/assets/landing.js') ?: time();
                 <div class="stat rv" style="--d:.3s"><b data-count="5">0</b><span>Langkah mudah</span></div>
             </div>
         </section>
-
-        <!-- ================= FITUR ================= -->
+                <!-- ================= FITUR ================= -->
         <section class="features" id="fitur" aria-labelledby="features-title">
             <div class="wrap">
                 <header class="section-header">
@@ -367,7 +365,7 @@ $jsVer     = @filemtime(__DIR__ . '/assets/landing.js') ?: time();
                     <div class="tv" id="tv" data-script="0">
                         <div class="tv-orn" aria-hidden="true"></div>
                         <p class="tv-small">KAMI MENGUNDANG ANDA</p>
-                        <p class="tv-names">Raka &amp; Sinta</p>
+                        <p class="tv-names">Marliana &amp; Choi Seungcheol</p>
                         <div class="tv-line"></div>
                         <p class="tv-date">14 · 02 · 2027</p>
                         <p class="tv-place">Gedung Serbaguna, Makassar</p>
@@ -402,7 +400,7 @@ $jsVer     = @filemtime(__DIR__ . '/assets/landing.js') ?: time();
                 <header class="section-header">
                     <span class="eyebrow rv"><i></i> HARGA</span>
                     <h2 id="price-title" class="rv">Mulai Gratis, Naik Kelas Saat Butuh</h2>
-                    <p class="rv">Paket Free sudah cukup untuk satu undangan lengkap. Pro untuk kamu yang butuh kuota dan batas upload lebih besar.</p>
+                    <p class="rv">Paket Free sudah cukup untuk satu undangan lengkap. Pro untuk kamu yang butuh membuat prompt tanpa batas harian.</p>
                 </header>
 
                 <div class="plans">
@@ -428,20 +426,18 @@ $jsVer     = @filemtime(__DIR__ . '/assets/landing.js') ?: time();
                         <span class="plan-badge">Paling lengkap</span>
                         <header>
                             <h3>Pro</h3>
-                            <p class="plan-sub">Untuk wedding organizer &amp; banyak undangan</p>
+                            <p class="plan-sub">Untuk yang butuh banyak prompt</p>
                             <p class="plan-price"><b><?= $PLAN_PRO['price'] ?></b><span><?= $PLAN_PRO['period'] ?></span></p>
                         </header>
                         <ul>
                             <li>Semua fitur Free, plus:</li>
-                            <li><b><?= $PLAN_PRO['quota'] ?> prompt</b> per hari</li>
-                            <li>Upload foto hingga <b><?= $PLAN_PRO['photo'] ?></b></li>
-                            <li>Upload musik hingga <b><?= $PLAN_PRO['music'] ?></b></li>
-                            <li>Ekspor RSVP &amp; ucapan tanpa batas</li>
-                            <li>Dukungan prioritas</li>
-                            <li>Akses lebih awal ke tema &amp; fitur baru</li>
+                            <li><b>Prompt tanpa batas</b> setiap hari</li>
+                            <li>Aktif <b>30 hari</b> per pembayaran</li>
+                            <li>Bayar aman lewat <b>Midtrans</b></li>
+                            <li>Perpanjang kapan saja, tanpa langganan otomatis</li>
                         </ul>
-                        <a href="<?= $ctaUrl ?>" class="btn btn-primary btn-block magnetic"><span>Mulai dari Free, upgrade nanti</span></a>
-                        <p class="plan-note">Pro segera hadir — daftar sekarang, upgrade kapan saja.</p>
+                        <a href="<?= $loggedIn ? $dashUrl : $regUrl ?>" class="btn btn-primary btn-block magnetic"><span><?= $loggedIn ? 'Upgrade ke Pro' : 'Daftar &amp; upgrade ke Pro' ?></span></a>
+                        <p class="plan-note">Bayar sekali untuk 30 hari. Tidak diperpanjang otomatis.</p>
                     </article>
                 </div>
 
@@ -458,7 +454,6 @@ $jsVer     = @filemtime(__DIR__ . '/assets/landing.js') ?: time();
                             <tr><th scope="row">Batas upload musik</th><td><?= $PLAN_FREE['music'] ?></td><td class="hl"><?= $PLAN_PRO['music'] ?></td></tr>
                             <tr><th scope="row">API RSVP &amp; ucapan</th><td class="y">✓</td><td class="y hl">✓</td></tr>
                             <tr><th scope="row">Ekspor RSVP</th><td class="y">✓</td><td class="y hl">✓</td></tr>
-                            <tr><th scope="row">Dukungan prioritas</th><td class="n">—</td><td class="y hl">✓</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -487,7 +482,7 @@ $jsVer     = @filemtime(__DIR__ . '/assets/landing.js') ?: time();
                     </details>
                     <details>
                         <summary>Kuota harian saya berapa dan kapan direset?</summary>
-                        <p>Paket Free mendapat <?= $PLAN_FREE['quota'] ?> prompt per hari, dan kuota reset otomatis setiap hari.</p>
+                        <p>Paket Free mendapat <?= $PLAN_FREE['quota'] ?> prompt per hari, dan kuota reset otomatis setiap hari. Paket Pro tidak dibatasi per hari.</p>
                     </details>
                     <details>
                         <summary>Apakah foto dan musik saya aman?</summary>
@@ -498,8 +493,8 @@ $jsVer     = @filemtime(__DIR__ . '/assets/landing.js') ?: time();
                         <p>Boleh. Semua prompt tersimpan di dashboard — kamu dapat mengedit data, mengganti tema, atau regenerate kapan pun.</p>
                     </details>
                     <details>
-                        <summary>Kapan paket Pro tersedia?</summary>
-                        <p>Pro sedang disiapkan. Daftar dengan paket Free sekarang, dan kamu bisa upgrade begitu Pro dibuka.</p>
+                        <summary>Bagaimana cara upgrade ke Pro?</summary>
+                        <p>Masuk ke dashboard, pilih upgrade ke Pro, lalu bayar lewat Midtrans. Paket aktif otomatis setelah pembayaran lunas dan berlaku 30 hari.</p>
                     </details>
                 </div>
             </div>
@@ -524,19 +519,7 @@ $jsVer     = @filemtime(__DIR__ . '/assets/landing.js') ?: time();
         </section>
     </main>
 
-    <footer class="site-footer" role="contentinfo">
-        <div class="wrap foot">
-            <img src="assets/logo-wordmark.png" alt="Invitia" width="150" height="28">
-            <p>&copy; <?= date('Y') ?> Invitia. Every moment, beautifully invited.</p>
-            <nav aria-label="Footer links">
-                <a href="#cara">Cara Kerja</a>
-                <a href="#harga">Harga</a>
-                <a href="<?= $loginUrl ?>">Login</a>
-                <a href="<?= $regUrl ?>">Daftar</a>
-                <a href="<?= BASE_URL ?>/api.php?action=info" target="_blank" rel="noopener">API Docs</a>
-            </nav>
-        </div>
-    </footer>
+    <?php require __DIR__ . '/lib/site_footer.php'; ?>
 
     <script src="assets/landing.js?v=<?= $jsVer ?>" defer></script>
 </body>
