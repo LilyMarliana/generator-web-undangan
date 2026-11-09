@@ -323,7 +323,7 @@
     var promptText = [
         '[h]# KONTEKS[/h]',
         'Buatkan website undangan pernikahan satu halaman',
-        'yang responsif untuk pasangan [k]Raka Pratama & Sinta Maharani[/k].',
+        'yang responsif untuk pasangan [k]Choi Seungcheol & Marliana[/k].',
         '',
         '[h]# ACARA[/h]',
         'Akad: [k]Sabtu, 14 Februari 2027, 09.00[/k]',
