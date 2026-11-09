@@ -118,6 +118,9 @@ function icon($name) {
         'edit'     => '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
         'key'      => '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>',
         'search'   => '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+        'chart'    => '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+        'star'     => '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+        'server'   => '<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/>',
     ];
     return '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . ($paths[$name] ?? '') . '</svg>';
 }
@@ -129,9 +132,13 @@ function app_menu($role) {
     if ($role === 'admin') {
         $dir   = __DIR__ . '/../pages/admin/';
         $items = [
-            ['dashboard', 'Ringkasan',     'dashboard.php', 'home'],
-            ['users',     'Pengguna',      'users.php',     'users'],
-            ['prompts',   'Semua Prompt',  'prompts.php',   'doc'],
+            ['dashboard', 'Ringkasan',         'dashboard.php', 'home'],
+            ['users',     'Pengguna',          'users.php',     'users'],
+            ['prompts',   'Semua Prompt',      'prompts.php',   'doc'],
+            ['wishes',    'Moderasi Ucapan',   'wishes.php',    'chat'],
+            ['activity',  'Aktivitas & Kuota', 'activity.php',  'chart'],
+            ['feedback',  'Masukan Penguji',   'feedback.php',  'star'],
+            ['system',    'Status Sistem',     'system.php',    'server'],
         ];
         $url = 'url_admin';
     } else {
@@ -143,6 +150,7 @@ function app_menu($role) {
             ['rsvp',      'RSVP Tamu',     'rsvp.php',      'check'],
             ['wishes',    'Ucapan Tamu',   'wishes.php',    'chat'],
             ['profile',   'Profil',        'profile.php',   'user'],
+            ['feedback',  'Beri Masukan',  'feedback.php',  'star'],
         ];
         $url = 'url_user';
     }
@@ -160,14 +168,15 @@ function app_header($title, $active = '', $opts = []) {
     $user    = current_user();
     $role    = $user['role'] ?? 'user';
     $initial = strtoupper(mb_substr($user['name'] ?? '?', 0, 1));
-    $css     = BASE_URL . '/assets/app.css';
+    // Nomor versi mengikuti waktu ubah file, jadi browser otomatis memuat CSS terbaru
+    $css     = BASE_URL . '/assets/app.css?v=' . (@filemtime(__DIR__ . '/../assets/app.css') ?: time());
     ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= e($title) ?> · Undangan Digital</title>
+    <title><?= e($title) ?> · Invitia</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -177,13 +186,13 @@ function app_header($title, $active = '', $opts = []) {
 <div class="app">
     <header class="mobilebar">
         <button type="button" class="icon-btn" id="navToggle" aria-label="Buka menu"><?= icon('menu') ?></button>
-        <span class="brand-name">Undangan Digital</span>
+        <span class="brand-name">Invitia</span>
     </header>
     <div class="scrim" id="navScrim"></div>
     <aside class="sidebar" id="sidebar">
         <a class="brand" href="<?= e(BASE_URL) ?>/index.php">
-            <span class="brand-mark">U</span>
-            <span class="brand-name">Undangan Digital</span>
+            <span class="brand-mark">I</span>
+            <span class="brand-name">Invitia</span>
         </a>
         <?php if ($role === 'admin'): ?><div class="role-tag"><?= icon('shield') ?> Admin</div><?php endif; ?>
         <nav class="nav" aria-label="Menu utama">

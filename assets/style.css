@@ -413,3 +413,30 @@ button { font: inherit; cursor: pointer; }
     .rv, .split .w > span { opacity: 1; transform: none; }
     .marquee-track { width: auto; flex-wrap: wrap; justify-content: center; }
 }
+/* ---------- perbaikan: section "Cara Kerja" di layar pendek ----------
+   Prinsip: jarak antar bagian (judul -> daftar langkah) tidak dikorbankan.
+   Yang dikecilkan hanya ilustrasi amplop (.stage) sesuai tinggi layar. */
+@media (min-width: 961px) {
+    .story-sticky { justify-content: safe center; padding-top: 92px; }
+    .story-head { margin-bottom: 36px; }
+}
+@media (min-width: 961px) and (max-height: 800px) {
+    .story-sticky { padding-top: 88px; padding-bottom: 20px; }
+    .story-head { margin-bottom: 32px; }
+    .stage { zoom: .88; }
+}
+@media (min-width: 961px) and (max-height: 720px) {
+    .story-sticky { padding-top: 84px; }
+    .story-head h2 { font-size: clamp(1.45rem, 2.6vw, 1.9rem); }
+    .stage { zoom: .74; }
+}
+@media (min-width: 961px) and (max-height: 640px) {
+    .story-sticky { padding-top: 80px; padding-bottom: 12px; }
+    .story-head { margin-bottom: 26px; }
+    .story-head .eyebrow { margin-bottom: 10px; }
+    .stage { zoom: .6; }
+    .story-steps li { padding: 10px 16px; }
+}
+@media (min-width: 961px) and (max-height: 570px) {
+    .stage { zoom: .5; }
+}

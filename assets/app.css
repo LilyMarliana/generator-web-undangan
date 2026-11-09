@@ -354,3 +354,39 @@ textarea.tall { min-height: 24rem; }
     .stack-sm td.msg { max-width: none; min-width: 0; }
 }
 
+
+/* ---------- perbaikan tabel & toolbar (admin) ---------- */
+.toolbar input[type=search], .toolbar input[type=text] { flex: 1 1 240px; width: auto; min-width: 0; }
+.card.flush { padding: 0; overflow: hidden; }
+.card.flush .table-wrap { border: 0; border-radius: 0; background: transparent; }
+.tbl th, .tbl td { padding: 12px 14px; }
+.row-actions { flex-wrap: wrap; }
+
+/* ---------- komponen halaman admin baru ---------- */
+.stars { color: #d9a520; letter-spacing: 2px; white-space: nowrap; font-size: .95rem; }
+.stars .off { color: var(--line); }
+.stack-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.stack-form input[type=text] { flex: 1 1 180px; width: auto; min-width: 0; }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 10px 22px; align-items: baseline; }
+.kv dt { color: var(--muted); font-size: .88rem; }
+.kv dd { font-weight: 500; overflow-wrap: anywhere; }
+.st-ok { color: var(--ok); font-weight: 600; }
+.st-bad { color: var(--bad); font-weight: 600; }
+.st-warn { color: #8a6a14; font-weight: 600; }
+.rate { display: flex; gap: 8px; flex-wrap: wrap; }
+.rate label { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; background: var(--surface); font-weight: 500; margin: 0; }
+.rate input { accent-color: var(--accent); width: auto; }
+.rate label:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-dark); }
+.quote { white-space: pre-line; overflow-wrap: anywhere; color: var(--ink-soft); font-size: .92rem; }
+.meter { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; min-width: 80px; }
+.meter b { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+.meter.full b { background: var(--bad); }
+
+
+/* ---------- perbaikan: grafik 14 hari tidak melebar di layar HP ---------- */
+.grid-2 > .card { min-width: 0; }
+@media (max-width: 640px) {
+    .bars.bars-14 { gap: 3px; }
+    .bars.bars-14 .bar small { font-size: .6rem; overflow: visible; }
+    .bars.bars-14 .bar:nth-child(even) small { visibility: hidden; }
+}
