@@ -39,26 +39,32 @@ $db     = getDB();
 $today  = date('Y-m-d');
 $user   = current_user();
 $userId = $user['id'];
-$quota  = max(1, daily_quota());
+$quota = daily_quota();
+$currentCount = null;
 
-// Pastikan baris quota hari ini ada (aman kalau dipanggil bersamaan / concurrent)
-$db->prepare("INSERT IGNORE INTO quota_logs (user_id, date, count) VALUES (?, ?, 0)")
-   ->execute([$userId, $today]);
+if ($quota !== null) {
+    $db->prepare("INSERT IGNORE INTO quota_logs (user_id, date, count) VALUES (?, ?, 0)")
+        ->execute([$userId, $today]);
 
-// Cek + increment dalam SATU operasi atomik di level SQL, menghilangkan race condition
-// (dua request bersamaan tidak bisa lolos cek quota di waktu yang sama)
-$stmt = $db->prepare("UPDATE quota_logs SET count = count + 1 WHERE user_id = ? AND date = ? AND count < ?");
-$stmt->execute([$userId, $today, $quota]);
+    $stmt = $db->prepare(
+        "UPDATE quota_logs
+        SET count = count + 1
+        WHERE user_id = ? AND date = ? AND count < ?"
+    );
+    $stmt->execute([$userId, $today, $quota]);
 
-if ($stmt->rowCount() === 0) {
-    echo json_encode(['success' => false, 'error' => 'Limit harian tercapai (' . $quota . 'x per hari). Silakan coba lagi besok.']);
-    exit;
+    if ($stmt->rowCount() === 0) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Limit harian tercapai (' . $quota . 'x per hari). Silakan coba lagi besok.'
+        ]);
+        exit;
+    }
+
+    $countStmt = $db->prepare("SELECT count FROM quota_logs WHERE user_id = ? AND date = ?");
+    $countStmt->execute([$userId, $today]);
+    $currentCount = (int)$countStmt->fetchColumn();
 }
-
-// Ambil sisa quota terbaru untuk response (opsional, buat ditampilkan di UI)
-$countStmt = $db->prepare("SELECT count FROM quota_logs WHERE user_id = ? AND date = ?");
-$countStmt->execute([$userId, $today]);
-$currentCount = (int) $countStmt->fetchColumn();
 
 $apiKey = bin2hex(random_bytes(16));
 
@@ -118,8 +124,10 @@ try {
 } catch (PDOException $ex) {
     // Penyimpanan gagal: kembalikan kuota yang sudah terpakai supaya user tidak dirugikan
     error_log('save prompt: ' . $ex->getMessage());
-    $db->prepare("UPDATE quota_logs SET count = GREATEST(count - 1, 0) WHERE user_id = ? AND date = ?")
-       ->execute([$userId, $today]);
+    if ($quota !== null) {
+        $db->prepare("UPDATE quota_logs SET count = GREATEST(count - 1, 0) WHERE user_id = ? AND date = ?")
+           ->execute([$userId, $today]);
+    }
     echo json_encode(['success' => false, 'error' => 'Gagal menyimpan prompt. Silakan coba lagi.']);
     exit;
 }
@@ -128,6 +136,6 @@ echo json_encode([
     'success'   => true,
     'id'        => $db->lastInsertId(),
     'api_key'   => $apiKey,
-    'remaining' => $quota - $currentCount,
+    'remaining' => $quota === null ? null : $quota - $currentCount,
 ]);
 exit;

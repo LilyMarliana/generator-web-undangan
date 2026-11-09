@@ -37,11 +37,17 @@ $st->execute([$uid]);
 $totalWishes = (int)$st->fetchColumn();
 
 /* Kuota harian */
-$st = $db->prepare("SELECT count FROM quota_logs WHERE user_id=? AND date=?");
-$st->execute([$uid, date('Y-m-d')]);
-$used      = (int)($st->fetchColumn() ?: 0);
-$quota     = max(1, daily_quota());
-$remaining = max(0, $quota - $used);
+$quota = daily_quota();
+
+if ($quota === null) {
+    $used = 0;
+    $remaining = null;
+} else {
+    $st = $db->prepare("SELECT count FROM quota_logs WHERE user_id=? AND date=?");
+    $st->execute([$uid, date('Y-m-d')]);
+    $used = (int)($st->fetchColumn() ?: 0);
+    $remaining = max(0, $quota - $used);
+}
 
 /* RSVP 7 hari terakhir */
 $st = $db->prepare(
@@ -122,9 +128,18 @@ app_header('Ringkasan', 'dashboard', [
 
     <section class="card">
         <h2 class="card-title">Kuota pembuatan hari ini</h2>
-        <p><strong><?= $remaining ?></strong> dari <?= $quota ?> kuota tersisa</p>
-        <div class="meter" role="progressbar" aria-valuenow="<?= $used ?>" aria-valuemin="0" aria-valuemax="<?= $quota ?>"><span style="width:<?= min(100, round($used / $quota * 100)) ?>%"></span></div>
-        <p class="small muted">Kuota direset otomatis setiap hari.</p>
+        <?php if ($quota === null): ?>
+            <p><strong>Paket Pro aktif</strong></p>
+            <p class="small muted">Prompt tanpa batas sampai <?= e(fmt_date($_SESSION['user']['subscription_expires_at'], false)) ?>.</p>
+        <?php else: ?>
+            <p><strong><?= $remaining ?></strong> dari <?= $quota ?> kuota tersisa</p>
+            <div class="meter" role="progressbar" aria-valuenow="<?= $used ?>" aria-valuemin="0" aria-valuemax="<?= $quota ?>"><span style="width:<?= min(100, round($used / $quota * 100)) ?>%"></span></div>
+            <p class="small muted">Kuota direset otomatis setiap hari.</p>
+            <form method="post" action="checkout.php" class="form-actions">
+                <?= csrf_field() ?>
+                <button class="btn-primary" type="submit">Upgrade Pro — Rp18.000 / 30 hari</button>
+            </form>
+        <?php endif; ?>
 
         <h3 class="card-title" style="margin-top:22px;">Undangan terbaru
             <?php if (has_page('undangan.php')): ?><a href="undangan.php">Lihat semua</a><?php endif; ?>

@@ -8,6 +8,7 @@ assets/*.mp3
 !assets/favicon.png
 hasil
 /config.php
+/vendor
 
 CLAUDE.md
 /.claude

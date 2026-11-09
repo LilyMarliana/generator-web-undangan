@@ -51,8 +51,17 @@ function require_user() {
 }
 
 /** Kuota pembuatan undangan per hari. Satu-satunya tempat angka ini diatur untuk dashboard. */
-function daily_quota() {
-    return 5; // TODO (koordinasi dgn Jibril): bisa diganti mengikuti paket/plan user
+function has_active_pro(): bool {
+      $user = current_user();
+      $expiresAt = $user['subscription_expires_at'] ?? null;
+
+      return ($user['plan'] ?? 'free') === 'pro'
+          && is_string($expiresAt)
+          && strtotime($expiresAt) > time();
+  }
+
+function daily_quota(): ?int {
+    return has_active_pro() ? null : 5;
 }
 
 /** True kalau halaman user itu sudah ada (supaya tidak ada link mati saat merge bertahap). */
