@@ -7,7 +7,11 @@ $in     = is_logged_in();
 $dash   = $base . ($in ? (($_SESSION['user']['role'] ?? '') === 'admin' ? '/pages/admin/dashboard.php' : '/pages/user/dashboard.php') : '/pages/login.php');
 $harga  = 'Rp' . number_format(defined('PRO_PRICE') ? PRO_PRICE : 18000, 0, ',', '.');
 $hari   = defined('PRO_DURATION_DAYS') ? PRO_DURATION_DAYS : 30;
-$repo   = 'https://github.com/LilyMarliana/generator-web-undangan';
+$waNum  = '6281958431365';
+$wa     = 'https://wa.me/' . $waNum . '?text=' . rawurlencode('Halo Invitia, saya ingin bertanya.');
+$ig     = 'https://www.instagram.com/'; // ganti dengan link akun Instagram Invitia
+$waE    = e($wa);
+$igE    = e($ig);
 $apiUrl = $base . '/api.php';
 $upd    = 'Terakhir diperbarui: 8 November 2026';
 
@@ -84,9 +88,44 @@ $P['pembayaran'] = ['Kebijakan pembayaran', <<<HTML
 <li>Permintaan pengembalian dana ditinjau satu per satu. Ajukan lewat halaman <a href="?p=kontak">Hubungi kami</a> dengan menyertakan nomor pesanan.</li></ul>
 <p class="note">{$upd}</p>
 HTML];
-$P['kontak'] = ['Hubungi kami', '<p>Punya pertanyaan, kendala, atau saran? Sampaikan lewat halaman Issues di GitHub kami.</p>'
- . '<p><a class="btn" href="' . e($repo) . '/issues" target="_blank" rel="noopener">Buka GitHub Issues</a></p>'
- . '<p class="note">Untuk masalah pembayaran, sertakan nomor pesanan dan jangan menulis kunci atau kata sandi apa pun di sana.</p>'];
+$P['kontak'] = ['Hubungi kami', <<<HTML
+<p>Ada pertanyaan, kendala, atau saran? Pilih cara yang paling nyaman buatmu. Kami berusaha membalas secepatnya.</p>
+<div class="cc">
+<a class="cc-i wa" href="{$waE}" target="_blank" rel="noopener"><b>WhatsApp</b><span>+62 819-5843-1365</span><em>Chat langsung →</em></a>
+<a class="cc-i ig" href="{$igE}" target="_blank" rel="noopener"><b>Instagram</b><span>Segera hadir</span><em>Kunjungi →</em></a>
+</div>
+
+<h3>Bantuan cepat</h3>
+<p>Jawabannya mungkin sudah ada di sini:</p>
+<div class="cards">
+<a href="?p=paket"><b>Cara upgrade ke Pro</b>Harga, masa aktif, dan langkah pembayaran.</a>
+<a href="?p=pembayaran"><b>Masalah pembayaran</b>Paket belum aktif atau butuh pengembalian dana.</a>
+<a href="?p=api"><b>Integrasi API</b>Endpoint RSVP dan ucapan tamu.</a>
+<a href="?p=faq"><b>Pertanyaan umum</b>Jawaban untuk hal yang paling sering ditanyakan.</a>
+</div>
+
+<h3>Kirim pesan lewat WhatsApp</h3>
+<p>Isi form ini, lalu kami buka WhatsApp dengan pesan yang sudah terisi. Kamu tinggal menekan kirim.</p>
+<form class="wf" id="waForm">
+<label for="wfName">Nama</label>
+<input id="wfName" type="text" maxlength="60" placeholder="Nama kamu" required>
+<label for="wfTopic">Topik</label>
+<select id="wfTopic">
+<option>Pertanyaan umum</option><option>Kendala teknis</option><option>Pembayaran / upgrade Pro</option><option>Pengembalian dana</option><option>Saran &amp; masukan</option><option>Kerja sama</option>
+</select>
+<label for="wfMsg">Pesan</label>
+<textarea id="wfMsg" rows="4" maxlength="600" placeholder="Ceritakan singkat apa yang bisa kami bantu" required></textarea>
+<button type="submit" class="btn">Buka WhatsApp</button>
+</form>
+
+<h3>Sebelum menghubungi, siapkan</h3>
+<ul>
+<li>Email akun yang kamu pakai untuk masuk ke Invitia.</li>
+<li>Nomor pesanan, kalau menyangkut pembayaran (ada di riwayat transaksi).</li>
+<li>Tangkapan layar dan langkah yang kamu lakukan, kalau menyangkut kendala teknis.</li>
+</ul>
+<p class="note">Demi keamananmu, jangan pernah mengirim kata sandi atau kunci rahasia apa pun lewat WhatsApp maupun Instagram.</p>
+HTML];
 
 $p = (isset($_GET['p']) && is_string($_GET['p']) && isset($P[$_GET['p']])) ? $_GET['p'] : 'tentang';
 ?>
@@ -115,11 +154,22 @@ a{color:var(--accent)}
 .side a:hover{background:var(--soft);transform:translateX(4px)}
 .side a.on{background:var(--accent);color:#fff}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:clamp(22px,4vw,40px);animation:up .6s .15s both;min-height:320px}
-.card h2{font:700 28px 'Fraunces',Georgia,serif;margin-bottom:16px}.card h3{font:600 20px 'Fraunces',serif;margin:22px 0 8px}
+.card h2{font:700 28px 'Fraunces',Georgia,serif;margin-bottom:16px}.card h3{font:600 20px 'Fraunces',serif;margin:26px 0 8px}
 .card p,.card ul,.card ol,.card table,.card pre{margin-bottom:14px}.card ul,.card ol{padding-left:22px}.card li{margin-bottom:6px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:18px 0}
-.cards div{background:var(--cream);border:1px solid var(--border);border-radius:16px;padding:16px;font-size:14px;transition:.3s}
-.cards div:hover{transform:translateY(-5px);box-shadow:0 14px 28px rgba(43,36,29,.1)}.cards b{display:block;font:600 16px 'Fraunces',serif;margin-bottom:4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:18px 0}
+.cards div,.cards a{display:block;background:var(--cream);border:1px solid var(--border);border-radius:16px;padding:16px;font-size:14px;color:#5b5146;text-decoration:none;transition:.3s}
+.cards div:hover,.cards a:hover{transform:translateY(-5px);box-shadow:0 14px 28px rgba(43,36,29,.1)}.cards b{display:block;font:600 16px 'Fraunces',serif;color:var(--ink);margin-bottom:4px}
+.cc{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:20px 0}
+.cc-i{display:block;border-radius:20px;padding:22px;text-decoration:none;color:#fff;transition:.3s;position:relative;overflow:hidden}
+.cc-i:hover{transform:translateY(-5px) rotate(-.5deg);box-shadow:0 18px 34px rgba(43,36,29,.2)}
+.cc-i.wa{background:linear-gradient(135deg,#25a85a,#1b7e43)}
+.cc-i.ig{background:linear-gradient(135deg,#f5a03a,#e0407a 55%,#8a3ab9)}
+.cc-i b{display:block;font:700 22px 'Fraunces',serif}.cc-i span{display:block;opacity:.92;margin:2px 0 14px}.cc-i em{font-style:normal;font-weight:600;font-size:14px}
+.wf{display:grid;gap:6px;margin:14px 0 8px}
+.wf label{font-size:13px;font-weight:600;color:#5b5146;margin-top:8px}
+.wf input,.wf select,.wf textarea{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:12px;font:inherit;background:var(--surface);color:var(--ink);transition:.2s}
+.wf input:focus,.wf select:focus,.wf textarea:focus{outline:2px solid var(--soft);border-color:var(--accent)}
+.wf .btn{justify-self:start;margin-top:12px;border:0;cursor:pointer;font:600 16px 'Work Sans',sans-serif}
 .steps li::marker{color:var(--accent);font-weight:700}
 .note{background:var(--cream);border-left:3px solid var(--accent);padding:12px 16px;border-radius:0 12px 12px 0;font-size:14px;color:#5b5146}
 table{width:100%;border-collapse:collapse;font-size:14.5px;display:block;overflow-x:auto}
@@ -148,5 +198,20 @@ details[open] summary:after{transform:rotate(45deg)}details p{color:#5b5146;anim
     <article class="card"><h2><?= e($P[$p][0]) ?></h2><?= $P[$p][1] ?></article>
 </div>
 <?php require __DIR__ . '/../lib/site_footer.php'; ?>
+<script>
+(function(){
+    var f=document.getElementById('waForm');
+    if(!f)return;
+    f.addEventListener('submit',function(e){
+        e.preventDefault();
+        var n=document.getElementById('wfName').value.trim(),
+            t=document.getElementById('wfTopic').value,
+            m=document.getElementById('wfMsg').value.trim();
+        if(!n||!m)return;
+        var text='Halo Invitia, saya '+n+'.\nTopik: '+t+'\n\n'+m;
+        window.open('https://wa.me/<?= $waNum ?>?text='+encodeURIComponent(text),'_blank','noopener');
+    });
+})();
+</script>
 </body>
 </html>
