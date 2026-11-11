@@ -92,11 +92,12 @@ try {
                     WHEN status IN ('settlement', 'capture') THEN status
                     ELSE ?
                 END,
+                paid_at = CASE WHEN paid_at IS NULL AND ? = 1 THEN NOW() ELSE paid_at END,
                 midtrans_transaction_id=?,
                 payload=CAST(? AS JSON)
             WHERE id=?"
         );
-        $stmt->execute([$statusToStore, $transactionId, $payload, $payment['id']]);
+        $stmt->execute([$statusToStore, $isSuccessful ? 1 : 0, $transactionId, $payload, $payment['id']]);
     }
 
     $alreadyPaid = in_array($payment['status'], ['settlement', 'capture'], true);
