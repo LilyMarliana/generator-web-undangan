@@ -58,3 +58,6 @@ function csrf_token() {
 function csrf_check($token) {
     return hash_equals($_SESSION['csrf_token'] ?? '', $token);
 }
+
+define('MIDTRANS_SERVER_KEY', 'ISI_SERVER_KEY_SANDBOX_DI_SINI');
+define('MIDTRANS_IS_PRODUCTION', false);
