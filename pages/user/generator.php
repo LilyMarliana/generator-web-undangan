@@ -23,7 +23,7 @@ app_header('Buat Undangan', 'generator', [
 
             <div class="wizard-progress">
                 <div class="wizard-progress-bar"><div class="wizard-progress-fill" id="wizardProgressFill"></div></div>
-                <div class="wizard-progress-label" id="wizardProgressLabel">Langkah 1 dari 5 — Data Pernikahan</div>
+                <div class="wizard-progress-label" id="wizardProgressLabel">Langkah 1 dari 5 : Data Pernikahan</div>
             </div>
 
             <div class="wizard-card">
@@ -230,7 +230,7 @@ app_header('Buat Undangan', 'generator', [
                         </div>
 
                         <div id="coverPembukaInput" class="conditional-input">
-                            <p style="margin:0; font-size:0.9em; line-height:1.5;">ℹ️ Nama tamu di cover ini <strong>tidak diisi manual di sini</strong> — otomatis terbaca dari link yang kamu bagikan ke tiap tamu, contoh: <code>undangan.html?to=Budi</code>. Kalau linknya dibuka tanpa <code>?to=</code>, otomatis tampil "Tamu Undangan".</p>
+                            <p style="margin:0; font-size:0.9em; line-height:1.5;">ℹ️ Nama tamu di cover ini <strong>tidak diisi manual di sini</strong>, otomatis terbaca dari link yang kamu bagikan ke tiap tamu, contoh: <code>undangan.html?to=Budi</code>. Kalau linknya dibuka tanpa <code>?to=</code>, otomatis tampil "Tamu Undangan".</p>
                         </div>
                     </div>
 
@@ -266,7 +266,7 @@ app_header('Buat Undangan', 'generator', [
 
                 <div class="wizard-step" data-step="5" style="display:none;">
                     <h2 class="step-title">Review &amp; Generate</h2>
-                    <p class="step-desc">Semua data sudah lengkap. Klik tombol di bawah untuk membuat prompt-nya — otomatis tersimpan dan kamu langsung diarahkan ke halaman detail undangan.</p>
+                    <p class="step-desc">Semua data sudah lengkap. Klik tombol di bawah untuk membuat prompt-nya. Prompt otomatis tersimpan dan kamu langsung diarahkan ke halaman detail undangan.</p>
 
                     <div class="wizard-nav">
                         <button type="button" class="btn-outline" onclick="goToStep(4)">Kembali</button>
@@ -308,7 +308,7 @@ app_header('Buat Undangan', 'generator', [
         const fill = document.getElementById('wizardProgressFill');
         const label = document.getElementById('wizardProgressLabel');
         if (fill) fill.style.width = pct + '%';
-        if (label) label.textContent = 'Langkah ' + n + ' dari ' + totalSteps + ' — ' + stepLabels[n];
+        if (label) label.textContent = 'Langkah ' + n + ' dari ' + totalSteps + ' : ' + stepLabels[n];
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 

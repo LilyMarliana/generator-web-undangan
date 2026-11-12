@@ -18,8 +18,8 @@ $add('Server', 'Batas upload', 'ok', 'upload_max_filesize ' . ini_get('upload_ma
 $disp = filter_var(ini_get('display_errors'), FILTER_VALIDATE_BOOLEAN);
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
 $isLocal = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1', '::1'], true);
-$add('Server', 'Tampilkan error ke pengunjung', $disp && !$isLocal ? 'warn' : 'ok', $disp ? 'display_errors aktif' . ($isLocal ? ' (wajar di lokal)' : ' — sebaiknya dimatikan di server online') : 'display_errors mati');
-$add('Server', 'Koneksi HTTPS', $https || $isLocal ? 'ok' : 'warn', $https ? 'Aman (HTTPS)' : ($isLocal ? 'HTTP (wajar di lokal)' : 'HTTP — gunakan HTTPS di server online'));
+$add('Server', 'Tampilkan error ke pengunjung', $disp && !$isLocal ? 'warn' : 'ok', $disp ? 'display_errors aktif' . ($isLocal ? ' (wajar di lokal)' : ', sebaiknya dimatikan di server online') : 'display_errors mati');
+$add('Server', 'Koneksi HTTPS', $https || $isLocal ? 'ok' : 'warn', $https ? 'Aman (HTTPS)' : ($isLocal ? 'HTTP (wajar di lokal)' : 'HTTP (gunakan HTTPS di server online)'));
 $add('Server', 'BASE_URL', 'ok', BASE_URL);
 
 /* --- Database --- */
@@ -32,17 +32,17 @@ foreach ($tables as $t) {
         $n = (int)$db->query("SELECT COUNT(*) FROM `$t`")->fetchColumn();
         $add('Database', 'Tabel ' . $t, 'ok', number_format($n, 0, ',', '.') . ' baris');
     } else {
-        $add('Database', 'Tabel ' . $t, $t === 'feedback' ? 'warn' : 'bad', $t === 'feedback' ? 'Belum ada — jalankan migration_feedback.sql' : 'Tidak ditemukan — jalankan schema.sql');
+        $add('Database', 'Tabel ' . $t, $t === 'feedback' ? 'warn' : 'bad', $t === 'feedback' ? 'Belum ada, jalankan migration_feedback.sql' : 'Tidak ditemukan, jalankan schema.sql');
     }
 }
 foreach ([['users', 'is_active', 'migration_users.sql / schema.sql'], ['wishes', 'is_hidden', 'migration_dashboard.sql']] as [$t, $col, $fix]) {
     $has = (bool)$db->query("SHOW COLUMNS FROM `$t` LIKE " . $db->quote($col))->fetch();
-    $add('Database', "Kolom $t.$col", $has ? 'ok' : 'bad', $has ? 'Ada' : 'Tidak ada — jalankan ' . $fix);
+    $add('Database', "Kolom $t.$col", $has ? 'ok' : 'bad', $has ? 'Ada' : 'Tidak ada, jalankan ' . $fix);
 }
 
 /* --- Penyimpanan upload --- */
 $dir = storage_local_dir();
-$add('Penyimpanan', 'Folder upload', is_dir($dir) && is_writable($dir) ? 'ok' : 'bad', is_dir($dir) ? (is_writable($dir) ? 'Bisa ditulis' : 'Tidak bisa ditulis — periksa izin folder assets/') : 'Folder tidak ada');
+$add('Penyimpanan', 'Folder upload', is_dir($dir) && is_writable($dir) ? 'ok' : 'bad', is_dir($dir) ? (is_writable($dir) ? 'Bisa ditulis' : 'Tidak bisa ditulis, periksa izin folder assets/') : 'Folder tidak ada');
 $cnt = 0; $bytes = 0;
 if (is_dir($dir)) {
     foreach (scandir($dir) ?: [] as $f) {
