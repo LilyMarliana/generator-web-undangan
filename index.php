@@ -48,7 +48,7 @@ $jsVer     = @filemtime(__DIR__ . '/assets/landing.js') ?: time();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invitia — Undangan Digital Siap Pakai</title>
+    <title>Invitia: Undangan Digital Siap Pakai</title>
     <meta name="description" content="Invitia: generate prompt AI lengkap untuk website undangan pernikahan dalam hitungan menit. Isi data pasangan, pilih tema, upload foto & musik, dapatkan prompt siap pakai untuk AI developer favoritmu.">
     <meta name="theme-color" content="#fbf3e5">
     <link rel="icon" type="image/png" href="assets/favicon.png">
@@ -110,7 +110,7 @@ $jsVer     = @filemtime(__DIR__ . '/assets/landing.js') ?: time();
                 <div class="hero-copy">
                     <span class="eyebrow rv"><i></i> UNDANGAN DIGITAL BERBASIS AI</span>
                     <h1 id="hero-title" class="split">Wujudkan Undangan Pernikahan <em>Impianmu</em></h1>
-                    <p class="hero-lead rv" style="--d:.5s">Isi data pasangan, pilih tema &amp; elemen, upload foto &amp; musik — dapatkan prompt lengkap untuk AI developer favoritmu. Tidak perlu coding, tidak perlu menulis prompt dari nol.</p>
+                    <p class="hero-lead rv" style="--d:.5s">Isi data pasangan, pilih tema &amp; elemen, upload foto &amp; musik. Dapatkan prompt lengkap untuk AI developer favoritmu. Tidak perlu coding, tidak perlu menulis prompt dari nol.</p>
                     <div class="hero-actions rv" style="--d:.65s">
                         <a href="<?= $ctaUrl ?>" class="btn btn-primary btn-lg magnetic"><span><?= $ctaLabel ?></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
                         <?php if (!$loggedIn): ?>
@@ -201,7 +201,7 @@ $jsVer     = @filemtime(__DIR__ . '/assets/landing.js') ?: time();
                         </li>
                         <li data-i="1">
                             <span class="sn">02</span>
-                            <div><h3>Pilih Tema &amp; Gaya</h3><p>17 palet warna dan 13 gaya visual — dari Minimalis Elegan, Rustic, Floral, sampai Kultural/Adat. Pilihanmu otomatis masuk ke prompt.</p></div>
+                            <div><h3>Pilih Tema &amp; Gaya</h3><p>17 palet warna dan 13 gaya visual, dari Minimalis Elegan, Rustic, Floral, sampai Kultural/Adat. Pilihanmu otomatis masuk ke prompt.</p></div>
                         </li>
                         <li data-i="2">
                             <span class="sn">03</span>
@@ -209,7 +209,7 @@ $jsVer     = @filemtime(__DIR__ . '/assets/landing.js') ?: time();
                         </li>
                         <li data-i="3">
                             <span class="sn">04</span>
-                            <div><h3>Tulis Cerita &amp; Ucapan</h3><p>Kutipan pembuka, kisah cinta, dan kata sambutan. Cukup tulis garis besarnya — AI yang merapikan bahasanya.</p></div>
+                            <div><h3>Tulis Cerita &amp; Ucapan</h3><p>Kutipan pembuka, kisah cinta, dan kata sambutan. Cukup tulis garis besarnya, AI yang merapikan bahasanya.</p></div>
                         </li>
                         <li data-i="4">
                             <span class="sn">05</span>
@@ -316,7 +316,7 @@ $jsVer     = @filemtime(__DIR__ . '/assets/landing.js') ?: time();
                     <article class="card spot rv" style="--d:.24s">
                         <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></div>
                         <h3>Kelola &amp; Edit Kapan Saja</h3>
-                        <p>Semua prompt tersimpan di dashboard. Edit, hapus, atau regenerate kapan pun — termasuk ekspor daftar RSVP.</p>
+                        <p>Semua prompt tersimpan di dashboard. Edit, hapus, atau regenerate kapan pun, termasuk ekspor daftar RSVP.</p>
                     </article>
 
                     <article class="card spot rv b-full" style="--d:.1s">
@@ -470,7 +470,7 @@ $jsVer     = @filemtime(__DIR__ . '/assets/landing.js') ?: time();
                 <div class="faq-list rv">
                     <details open>
                         <summary>Apa sebenarnya yang Invitia hasilkan?</summary>
-                        <p>Invitia menghasilkan <b>prompt</b> — instruksi lengkap yang kamu tempel ke AI (ChatGPT, Claude, Cursor, dll). AI-lah yang kemudian menulis kode website undangannya. Dengan begitu, hasilnya fleksibel dan bisa kamu minta revisi sesuka hati.</p>
+                        <p>Invitia menghasilkan <b>prompt</b>, instruksi lengkap yang kamu tempel ke AI (ChatGPT, Claude, Cursor, dll). AI-lah yang kemudian menulis kode website undangannya. Dengan begitu, hasilnya fleksibel dan bisa kamu minta revisi sesuka hati.</p>
                     </details>
                     <details>
                         <summary>Saya tidak bisa coding, apakah tetap bisa?</summary>
@@ -490,7 +490,7 @@ $jsVer     = @filemtime(__DIR__ . '/assets/landing.js') ?: time();
                     </details>
                     <details>
                         <summary>Boleh edit setelah prompt dibuat?</summary>
-                        <p>Boleh. Semua prompt tersimpan di dashboard — kamu dapat mengedit data, mengganti tema, atau regenerate kapan pun.</p>
+                        <p>Boleh. Semua prompt tersimpan di dashboard, kamu dapat mengedit data, mengganti tema, atau regenerate kapan pun.</p>
                     </details>
                     <details>
                         <summary>Bagaimana cara upgrade ke Pro?</summary>

@@ -137,7 +137,7 @@ app_header('Ringkasan', 'dashboard', [
             <p class="small muted">Kuota direset otomatis setiap hari.</p>
             <form method="post" action="checkout.php" class="form-actions">
                 <?= csrf_field() ?>
-                <button class="btn-primary" type="submit">Upgrade Pro — Rp18.000 / 30 hari</button>
+                <button class="btn-primary" type="submit">Upgrade Pro: Rp18.000 / 30 hari</button>
             </form>
         <?php endif; ?>
 

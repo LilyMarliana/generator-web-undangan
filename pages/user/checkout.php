@@ -38,7 +38,7 @@ try {
             'id' => 'pro-30-days',
             'price' => PRO_PRICE,
             'quantity' => 1,
-            'name' => 'Paket Pro — 30 Hari',
+            'name' => 'Paket Pro 30 Hari',
         ]],
         'customer_details' => [
             'first_name' => $user['name'],
