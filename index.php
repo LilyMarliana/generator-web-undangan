@@ -51,6 +51,22 @@ $jsVer     = @filemtime(__DIR__ . '/assets/landing.js') ?: time();
     <title>Invitia: Undangan Digital Siap Pakai</title>
     <meta name="description" content="Invitia: generate prompt AI lengkap untuk website undangan pernikahan dalam hitungan menit. Isi data pasangan, pilih tema, upload foto & musik, dapatkan prompt siap pakai untuk AI developer favoritmu.">
     <meta name="theme-color" content="#fbf3e5">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+    <?php $ogImg = e(rtrim(BASE_URL, '/') . '/assets/og-image.jpg?v=' . (@filemtime(__DIR__ . '/assets/og-image.jpg') ?: 1)); ?>
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Invitia">
+    <meta property="og:locale" content="id_ID">
+    <meta property="og:title" content="Invitia: Undangan Digital Siap Pakai">
+    <meta property="og:description" content="Isi data pasangan, pilih tema, lalu dapatkan prompt AI lengkap untuk website undangan pernikahanmu dalam hitungan menit.">
+    <meta property="og:url" content="<?= e(rtrim(BASE_URL, '/') . '/') ?>">
+    <meta property="og:image" content="<?= $ogImg ?>">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Logo Invitia, amplop undangan dengan hati">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Invitia: Undangan Digital Siap Pakai">
+    <meta name="twitter:description" content="Isi data pasangan, pilih tema, lalu dapatkan prompt AI lengkap untuk website undangan pernikahanmu dalam hitungan menit.">
+    <meta name="twitter:image" content="<?= $ogImg ?>">
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

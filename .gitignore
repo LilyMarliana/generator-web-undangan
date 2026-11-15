@@ -6,6 +6,8 @@ assets/*.mp3
 !assets/logo-symbol.png
 !assets/logo-wordmark.png
 !assets/favicon.png
+!assets/apple-touch-icon.png
+!assets/og-image.jpg
 hasil
 /config.php
 /vendor
