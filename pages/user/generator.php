@@ -440,7 +440,20 @@ app_header('Buat Undangan', 'generator', [
         });
     }
 
+    let isGenerating = false;
+    let saveStarted = false;
+
+    function setGenerating(on) {
+        isGenerating = on;
+        const btn = document.querySelector('button[onclick="generatePrompt()"]');
+        if (btn) {
+            btn.disabled = on;
+            btn.textContent = on ? 'Memproses...' : 'Generate & Simpan Prompt';
+        }
+    }
+
     function savePrompt(groomName, brideName) {
+        saveStarted = true;
         const title = 'Prompt Undangan ' + groomName + ' & ' + brideName;
         const content = document.getElementById('resultText').textContent;
         const formData = new FormData();
@@ -451,17 +464,36 @@ app_header('Buat Undangan', 'generator', [
         formData.append('bride_name', brideName);
 
         fetch('save.php', {method:'POST', body:formData})
-            .then(r=>r.json()).then(d=> {
+            .then(r => r.json()).then(d => {
                 if (d.success) {
                     // Langsung ke halaman detail undangan yang baru dibuat
                     window.location.href = 'detail.php?id=' + encodeURIComponent(d.id);
                 } else {
+                    saveStarted = false;
+                    setGenerating(false);
                     alert('Gagal menyimpan: ' + d.error);
                 }
-            }).catch(e=>alert('Error: ' + e));
+            }).catch(e => {
+                saveStarted = false;
+                setGenerating(false);
+                alert('Error: ' + e);
+            });
     }
 
     async function generatePrompt() {
+        if (isGenerating) return;
+        saveStarted = false;
+        setGenerating(true);
+        try {
+            await generatePromptInner();
+        } catch (e) {
+            alert('Terjadi kesalahan: ' + e);
+        } finally {
+            if (!saveStarted) setGenerating(false);
+        }
+    }
+
+    async function generatePromptInner() {
         const form = document.getElementById('weddingForm');
         const formData = new FormData(form);
         const groomName = formData.get('groomName');

@@ -1,83 +1,122 @@
 <?php
 /**
- * Lapisan penyimpanan file upload (foto & musik undangan).
- *
- * Semua kode lain (upload.php, delete.php) HANYA memakai fungsi di file ini, jadi
- * pindah dari folder lokal ke cloud (mis. Amazon S3) nanti cukup menambah satu
- * "driver" di sini tanpa mengubah halaman lain.
- *
- * Driver diatur lewat konstanta STORAGE_DRIVER di config.php (opsional).
- * Kalau tidak ada, dipakai 'local' (folder assets/ di server).
+ * Lapisan penyimpanan file upload INVITIA.
+ * Mendukung penyimpanan lokal dan Amazon S3.
  */
 require_once __DIR__ . '/../config.php';
 
-/** Nama driver aktif. */
 function storage_driver() {
     return defined('STORAGE_DRIVER') ? STORAGE_DRIVER : 'local';
 }
 
-/** Folder fisik untuk driver local. */
 function storage_local_dir() {
     return __DIR__ . '/../assets/';
 }
 
-/**
- * Pola nama file hasil upload (uniqid dengan more_entropy), contoh:
- *   6a9197535ed830.54212178.jpeg   (14 karakter hex + titik + 8 angka + ekstensi)
- * Pola ketat ini mencegah file lain di assets/ (style.css, app.css, dll)
- * ikut terhapus walau namanya disebut di teks prompt.
- */
 function storage_name_pattern() {
     return '[a-f0-9]{13,15}\.[0-9]{8}\.(?:jpe?g|png|mp3)';
 }
 
+function storage_s3_client() {
+    require_once __DIR__ . '/../vendor/autoload.php';
+
+    return new Aws\S3\S3Client([
+        'version' => 'latest',
+        'region'  => AWS_REGION,
+    ]);
+}
+
 /**
- * Simpan file hasil upload dan kembalikan URL publiknya (null kalau gagal).
- * $tmpPath = $_FILES[...]['tmp_name'], $ext = ekstensi file huruf kecil tanpa titik.
+ * Simpan file dan kembalikan URL publik yang stabil.
  */
 function storage_put($tmpPath, $ext) {
-    $name = uniqid('', true) . '.' . $ext;
+    $name = uniqid('', true) . '.' . strtolower($ext);
 
     switch (storage_driver()) {
+        case 's3':
+            try {
+                $s3 = storage_s3_client();
+
+                $s3->putObject([
+                    'Bucket'      => S3_BUCKET,
+                    'Key'         => $name,
+                    'SourceFile'  => $tmpPath,
+                    'ContentType' => match (strtolower($ext)) {
+                        'jpg', 'jpeg' => 'image/jpeg',
+                        'png'         => 'image/png',
+                        'mp3'         => 'audio/mpeg',
+                        default       => 'application/octet-stream',
+                    },
+                ]);
+
+                return rtrim(BASE_URL, '/') . '/storage/' . $name;
+            } catch (Aws\Exception\AwsException $e) {
+                error_log('INVITIA S3 upload error: ' . $e->getMessage());
+                return null;
+            }
+
         case 'local':
         default:
             $dir = storage_local_dir();
+
             if (!is_dir($dir)) {
                 @mkdir($dir, 0777, true);
             }
+
             if (!move_uploaded_file($tmpPath, $dir . $name)) {
                 return null;
             }
+
             return rtrim(BASE_URL, '/') . '/assets/' . $name;
     }
 }
 
 /**
- * Cari semua file upload milik aplikasi yang disebut di dalam sebuah teks (prompt).
- * Mengembalikan daftar "ref" unik (untuk driver local = nama file).
+ * Temukan referensi file dari URL S3 proxy maupun URL lokal lama.
  */
 function storage_refs_in($text) {
-    if (!preg_match_all('~/assets/(' . storage_name_pattern() . ')~i', (string)$text, $m)) {
+    $pattern = '~/(?:storage|assets)/(' . storage_name_pattern() . ')~i';
+
+    if (!preg_match_all($pattern, (string)$text, $matches)) {
         return [];
     }
-    return array_values(array_unique($m[1]));
+
+    return array_values(array_unique($matches[1]));
 }
 
-/** Hapus satu file berdasarkan ref. Return true kalau file benar-benar terhapus. */
+/**
+ * Hapus file dari S3 atau penyimpanan lokal.
+ */
 function storage_delete($ref) {
     if (!preg_match('~^' . storage_name_pattern() . '$~i', (string)$ref)) {
-        return false; // bukan file upload milik aplikasi
+        return false;
     }
 
     switch (storage_driver()) {
+        case 's3':
+            try {
+                $s3 = storage_s3_client();
+
+                $s3->deleteObject([
+                    'Bucket' => S3_BUCKET,
+                    'Key'    => $ref,
+                ]);
+
+                return true;
+            } catch (Aws\Exception\AwsException $e) {
+                error_log('INVITIA S3 delete error: ' . $e->getMessage());
+                return false;
+            }
+
         case 'local':
         default:
-            $dir  = realpath(storage_local_dir());
+            $dir = realpath(storage_local_dir());
             $file = $dir ? realpath($dir . DIRECTORY_SEPARATOR . $ref) : false;
-            // pastikan benar-benar berada di dalam folder assets/
+
             if ($file && strpos($file, $dir . DIRECTORY_SEPARATOR) === 0 && is_file($file)) {
                 return @unlink($file);
             }
+
             return false;
     }
 }

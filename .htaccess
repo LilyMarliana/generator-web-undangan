@@ -1,0 +1,3 @@
+RewriteEngine On
+
+RewriteRule ^storage/([a-f0-9]{13,15}\.[0-9]{8}\.(?:jpe?g|png|mp3))$ storage.php?file=$1 [L,QSA]
