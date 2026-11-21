@@ -25,7 +25,7 @@ function supabase_request($endpoint, $method = 'GET', $data = null) {
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Kompatibel dengan SSL cert lokal Laragon/Windows
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Kompatibel dengan SSL cert lokal Laragon/Windows
 
     if ($data !== null) {
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
@@ -138,7 +138,7 @@ function supabase_handle_oauth_callback() {
         'code_verifier' => $verifier,
     ]));
     curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

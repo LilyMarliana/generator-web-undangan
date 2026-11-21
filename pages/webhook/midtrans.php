@@ -33,12 +33,19 @@ if (
     respond(400, 'Missing notification fields');
 }
 
-$expectedSignature = hash(
-    'sha512',
-    $orderId . (string)$statusCode . (string)$grossAmount . MIDTRANS_SERVER_KEY
-);
+$sigBase = $orderId . (string)$statusCode . (string)$grossAmount;
+$sigKeys = [MIDTRANS_SERVER_KEY];
+if (defined('MIDTRANS_SIGNATURE_KEY') && MIDTRANS_SIGNATURE_KEY !== '') {
+    array_unshift($sigKeys, MIDTRANS_SIGNATURE_KEY);
+}
+$sigValid = false;
+foreach ($sigKeys as $sigKey) {
+    if (hash_equals(hash('sha512', $sigBase . $sigKey), $signature)) {
+        $sigValid = true;
+    }
+}
 
-if (!hash_equals($expectedSignature, $signature)) {
+if (!$sigValid) {
     error_log('Midtrans webhook: invalid signature for ' . $orderId);
     respond(403, 'Invalid signature');
 }
@@ -94,7 +101,7 @@ try {
                 END,
                 paid_at = CASE WHEN paid_at IS NULL AND ? = 1 THEN NOW() ELSE paid_at END,
                 midtrans_transaction_id=?,
-                payload=CAST(? AS JSON)
+                payload=?
             WHERE id=?"
         );
         $stmt->execute([$statusToStore, $isSuccessful ? 1 : 0, $transactionId, $payload, $payment['id']]);

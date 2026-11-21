@@ -2,6 +2,24 @@
 require_once __DIR__ . '/../../lib/layout.php';
 require_user();
 
+/* Mode edit: generator.php?edit=ID memuat jawaban wizard yang tersimpan */
+$editId   = 0;
+$editData = null;
+if (isset($_GET['edit']) && ctype_digit((string)$_GET['edit'])) {
+    $st = getDB()->prepare("SELECT id, form_data FROM prompts WHERE id = ? AND user_id = ?");
+    $st->execute([(int)$_GET['edit'], (int)$_SESSION['user']['id']]);
+    $row = $st->fetch();
+    if (!$row) {
+        msg_add('error', 'Undangan tidak ditemukan atau bukan milikmu.');
+        redirect(url_user('undangan.php'));
+    }
+    $editData = $row['form_data'] ? json_decode($row['form_data'], true) : null;
+    if (!$editData) { // undangan lama tanpa data form: pakai edit teks biasa
+        redirect(url_user('edit.php?id=' . (int)$row['id']));
+    }
+    $editId = (int)$row['id'];
+}
+
 /* Pesan flash gaya lama dipindah ke sistem pesan baru */
 if ($m = flash('save_success')) {
     msg_add('success', $m);
@@ -353,10 +371,10 @@ app_header('Buat Undangan', 'generator', [
             const heroChecked   = document.getElementById('heroImage').checked;
             const coupleChecked = document.getElementById('couplePhotos').checked;
             const musicChecked  = document.getElementById('music').checked;
-            const heroFileCheck  = document.getElementById('heroImageUpload').files[0];
-            const groomFileCheck = document.getElementById('groomPhotoUpload').files[0];
-            const brideFileCheck = document.getElementById('bridePhotoUpload').files[0];
-            const musicFileCheck = document.getElementById('musicUpload').files[0];
+            const heroFileCheck  = document.getElementById('heroImageUpload').files[0] || existingUpload('heroImage');
+            const groomFileCheck = document.getElementById('groomPhotoUpload').files[0] || existingUpload('groomPhoto');
+            const brideFileCheck = document.getElementById('bridePhotoUpload').files[0] || existingUpload('bridePhoto');
+            const musicFileCheck = document.getElementById('musicUpload').files[0] || existingUpload('music');
             const missingFiles = [];
             if (heroChecked && !heroFileCheck) missingFiles.push('Foto Hero Image');
             if (coupleChecked && !groomFileCheck) missingFiles.push('Foto Pengantin Pria');
@@ -440,7 +458,109 @@ app_header('Buat Undangan', 'generator', [
         });
     }
 
-    function savePrompt(groomName, brideName) {
+    const EDIT_ID   = <?= (int)$editId ?>;
+    const EDIT_DATA = <?= $editId ? json_encode($editData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) : 'null' ?>;
+
+    // File lama (mode edit): dipakai kalau pengguna tidak memilih file baru
+    function existingUpload(key) {
+        return (EDIT_DATA && EDIT_DATA.uploads && EDIT_DATA.uploads[key]) || '';
+    }
+
+    // Kumpulkan jawaban wizard (tanpa file) supaya undangan bisa diedit lagi
+    function collectWizardData(uploadsUsed) {
+        const form = document.getElementById('weddingForm');
+        const fields = {};
+        form.querySelectorAll('input, textarea, select').forEach(el => {
+            if (!el.name || el.type === 'file') return;
+            if (el.type === 'radio') {
+                if (el.checked) fields[el.name] = el.value;
+            } else if (el.type === 'checkbox') {
+                if (el.name === 'elements') {
+                    fields.elements = fields.elements || [];
+                    if (el.checked) fields.elements.push(el.value);
+                } else {
+                    fields[el.name] = el.checked;
+                }
+            } else {
+                fields[el.name] = el.value;
+            }
+        });
+        return { fields: fields, uploads: uploadsUsed || {} };
+    }
+
+    // Isi ulang form dari data tersimpan
+    function fillWizard(d) {
+        const form = document.getElementById('weddingForm');
+        const f = (d && d.fields) || {};
+        Object.keys(f).forEach(name => {
+            const v = f[name];
+            form.querySelectorAll('[name="' + name + '"]').forEach(el => {
+                if (el.type === 'file') return;
+                if (el.type === 'radio') {
+                    el.checked = (el.value === v);
+                    if (el.checked) el.dispatchEvent(new Event('change', {bubbles: true}));
+                } else if (el.type === 'checkbox') {
+                    el.checked = (name === 'elements') ? (Array.isArray(v) && v.indexOf(el.value) !== -1) : !!v;
+                    el.dispatchEvent(new Event('change', {bubbles: true}));
+                } else {
+                    el.value = (v === null || v === undefined) ? '' : v;
+                }
+            });
+        });
+        handleConditionalInputs();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!EDIT_ID || !EDIT_DATA) return;
+        fillWizard(EDIT_DATA);
+        const btn = document.querySelector('button[onclick="generatePrompt()"]');
+        if (btn) btn.textContent = 'Simpan Perubahan';
+        const wrap = document.querySelector('.wizard-wrap');
+        if (wrap) {
+            const note = document.createElement('div');
+            note.className = 'card';
+            note.style.cssText = 'margin-bottom:16px;padding:12px 16px;';
+            note.textContent = 'Mode edit: semua isian sudah terisi. Foto dan musik lama tetap dipakai kalau kamu tidak memilih file baru. Mengedit tidak memakai kuota harian.';
+            wrap.insertBefore(note, wrap.firstChild);
+        }
+    });
+
+    // Kecilkan foto besar di browser sebelum diupload (maks 1600px, JPEG) supaya lolos batas ukuran
+    async function shrinkImage(file, maxSide, quality) {
+        maxSide = maxSide || 1600; quality = quality || 0.82;
+        if (!file || !/^image\/(jpeg|png)$/.test(file.type)) return file;
+        if (file.size <= 600 * 1024) return file; // sudah cukup kecil
+        try {
+            const bmp = await createImageBitmap(file);
+            const scale = Math.min(1, maxSide / Math.max(bmp.width, bmp.height));
+            const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale);
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); // PNG transparan jadi latar putih
+            ctx.drawImage(bmp, 0, 0, w, h);
+            const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
+            if (!blob || blob.size >= file.size) return file;
+            return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', {type: 'image/jpeg'});
+        } catch (e) {
+            return file; // gagal dikecilkan: kirim apa adanya
+        }
+    }
+
+    let isGenerating = false;
+    let saveStarted = false;
+
+    function setGenerating(on) {
+        isGenerating = on;
+        const btn = document.querySelector('button[onclick="generatePrompt()"]');
+        if (btn) {
+            btn.disabled = on;
+            btn.textContent = on ? 'Memproses...' : (EDIT_ID ? 'Simpan Perubahan' : 'Generate & Simpan Prompt');
+        }
+    }
+
+    function savePrompt(groomName, brideName, uploadsUsed) {
+        saveStarted = true;
         const title = 'Prompt Undangan ' + groomName + ' & ' + brideName;
         const content = document.getElementById('resultText').textContent;
         const formData = new FormData();
@@ -449,19 +569,49 @@ app_header('Buat Undangan', 'generator', [
         formData.append('prompt', content);
         formData.append('groom_name', groomName);
         formData.append('bride_name', brideName);
+        formData.append('form_data', JSON.stringify(collectWizardData(uploadsUsed)));
+        if (EDIT_ID) formData.append('edit_id', EDIT_ID);
 
         fetch('save.php', {method:'POST', body:formData})
-            .then(r=>r.json()).then(d=> {
+            .then(r => r.json()).then(d => {
                 if (d.success) {
                     // Langsung ke halaman detail undangan yang baru dibuat
                     window.location.href = 'detail.php?id=' + encodeURIComponent(d.id);
                 } else {
+                    saveStarted = false;
+                    setGenerating(false);
                     alert('Gagal menyimpan: ' + d.error);
                 }
-            }).catch(e=>alert('Error: ' + e));
+            }).catch(e => {
+                saveStarted = false;
+                setGenerating(false);
+                alert('Error: ' + e);
+            });
     }
 
     async function generatePrompt() {
+        if (isGenerating) return;
+        saveStarted = false;
+        setGenerating(true);
+        try {
+            await generatePromptInner();
+        } catch (e) {
+            alert('Terjadi kesalahan: ' + e);
+        } finally {
+            if (!saveStarted) setGenerating(false);
+        }
+    }
+
+    async function generatePromptInner() {
+        // Cek kuota harian dulu, sebelum file apa pun diupload
+        try {
+            const qr = await fetch('quota.php', {cache: 'no-store'});
+            const q = await qr.json();
+            if (!EDIT_ID && q && q.unlimited === false && q.remaining <= 0) {
+                alert('Limit harian tercapai (' + q.limit + ' undangan per hari). Coba lagi besok, atau upgrade ke Pro dari halaman Ringkasan.');
+                return;
+            }
+        } catch (e) { /* pengecekan gagal: lanjut, server tetap menolak di save.php */ }
         const form = document.getElementById('weddingForm');
         const formData = new FormData(form);
         const groomName = formData.get('groomName');
@@ -506,10 +656,10 @@ app_header('Buat Undangan', 'generator', [
         const coupleChecked = document.getElementById('couplePhotos').checked;
         const musicChecked  = document.getElementById('music').checked;
 
-        const heroFileCheck  = document.getElementById('heroImageUpload').files[0];
-        const groomFileCheck = document.getElementById('groomPhotoUpload').files[0];
-        const brideFileCheck = document.getElementById('bridePhotoUpload').files[0];
-        const musicFileCheck = document.getElementById('musicUpload').files[0];
+        const heroFileCheck  = document.getElementById('heroImageUpload').files[0] || existingUpload('heroImage');
+        const groomFileCheck = document.getElementById('groomPhotoUpload').files[0] || existingUpload('groomPhoto');
+        const brideFileCheck = document.getElementById('bridePhotoUpload').files[0] || existingUpload('bridePhoto');
+        const musicFileCheck = document.getElementById('musicUpload').files[0] || existingUpload('music');
 
         const missingFiles = [];
         if (heroChecked && !heroFileCheck) missingFiles.push('Foto Hero Image');
@@ -536,13 +686,13 @@ app_header('Buat Undangan', 'generator', [
 
         if (heroFile || groomPhotoFile || bridePhotoFile || musicFile || hasGallery) {
             const uploadData = new FormData();
-            if (heroFile) uploadData.append('heroImageUpload', heroFile);
-            if (groomPhotoFile) uploadData.append('groomPhotoUpload', groomPhotoFile);
-            if (bridePhotoFile) uploadData.append('bridePhotoUpload', bridePhotoFile);
+            if (heroFile) uploadData.append('heroImageUpload', await shrinkImage(heroFile));
+            if (groomPhotoFile) uploadData.append('groomPhotoUpload', await shrinkImage(groomPhotoFile));
+            if (bridePhotoFile) uploadData.append('bridePhotoUpload', await shrinkImage(bridePhotoFile));
             if (musicFile) uploadData.append('musicUpload', musicFile);
             for (let i=1;i<=6;i++) {
                 const f = document.getElementById('galleryUpload'+i).files[0];
-                if (f) uploadData.append('galleryUpload'+i, f);
+                if (f) uploadData.append('galleryUpload'+i, await shrinkImage(f));
             }
             try {
                 const res = await fetch('upload.php', {method:'POST', body:uploadData});
@@ -556,10 +706,22 @@ app_header('Buat Undangan', 'generator', [
                         .map(([field, msg]) => '- ' + field + ': ' + msg)
                         .join('\n');
                     alert('Beberapa file gagal diupload:\n' + pesan);
+                    return;
                 }
             } catch (e) {
-                alert('Gagal mengupload file. Periksa format (gambar: JPG/PNG, musik: MP3) dan ukuran (maks 5MB gambar / 5MB musik).');
+                alert('Gagal mengupload file. Periksa format (gambar: JPG/PNG maks 2MB, musik: MP3/M4A/WAV maks 20MB).');
                 return;
+            }
+        }
+
+        // Mode edit: pakai file lama untuk bagian yang tidak diganti
+        if (EDIT_DATA && EDIT_DATA.uploads) {
+            const oldUp = EDIT_DATA.uploads;
+            ['heroImage', 'groomPhoto', 'bridePhoto', 'music'].forEach(k => {
+                if (!uploads[k] && oldUp[k]) uploads[k] = oldUp[k];
+            });
+            for (let i = 0; i < 6; i++) {
+                if (!uploads.gallery[i] && oldUp.gallery && oldUp.gallery[i]) uploads.gallery[i] = oldUp.gallery[i];
             }
         }
 
@@ -785,10 +947,9 @@ ${openingQuote ? 'Quote / Ayat Pembuka:\n"' + openingQuote + '"\n\n' : ''}Websit
         prompt += '\n\nSebelum memberikan jawaban akhir, periksa ulang dan pastikan semuanya terpenuhi:\n1. Semua elemen di daftar "Elemen yang harus ada" sudah dibuat, dan tidak ada elemen fungsional lain.\n2. Tidak ada horizontal scroll dan tidak ada teks terpotong di lebar 375px, 768px, dan 1440px.\n3. Semua link/URL file yang diberikan (foto, musik, maps) dipakai persis, tidak diganti placeholder.\n4. Tidak ada teks Lorem ipsum atau placeholder; seluruh teks memakai data di atas dalam Bahasa Indonesia yang sopan dan hangat.\n5. Semua tombol dan interaksi berfungsi dan tidak ada error di console.\n6. Kontras teks terbaca, dan animasi dikurangi saat prefers-reduced-motion aktif.\n7. Jawaban berisi HANYA satu file HTML lengkap dalam satu blok kode, tanpa penjelasan panjang di luar kode.';
 
         document.getElementById('resultText').textContent = prompt;
-        document.getElementById('resultContainer').style.display = 'block';
-        document.getElementById('resultContainer').scrollIntoView({behavior:'smooth'});
+        // Prompt hanya ditampilkan di halaman detail setelah server menerima (kuota dicek di save.php)
 
-        savePrompt(groomName, brideName);
+        savePrompt(groomName, brideName, uploads);
     }
 
     function copyToClipboard() {
