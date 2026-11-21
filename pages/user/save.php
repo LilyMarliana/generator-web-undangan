@@ -20,6 +20,14 @@ $prompt     = trim($_POST['prompt'] ?? '');
 $groomName  = trim($_POST['groom_name'] ?? '');
 $brideName  = trim($_POST['bride_name'] ?? '');
 
+// Mode edit: edit_id = id undangan yang diubah. form_data = jawaban wizard (JSON) supaya bisa diedit lagi.
+$editId   = (isset($_POST['edit_id']) && ctype_digit((string)$_POST['edit_id'])) ? (int)$_POST['edit_id'] : 0;
+$formData = (isset($_POST['form_data']) && is_string($_POST['form_data'])) ? $_POST['form_data'] : null;
+if ($formData !== null && (strlen($formData) > 500000 || json_decode($formData, true) === null)) {
+    echo json_encode(['success' => false, 'error' => 'Data form tidak valid']);
+    exit;
+}
+
 if ($title === '' || $prompt === '') {
     echo json_encode(['success' => false, 'error' => 'Judul dan prompt harus diisi']);
     exit;
@@ -42,7 +50,7 @@ $userId = $user['id'];
 $quota = daily_quota();
 $currentCount = null;
 
-if ($quota !== null) {
+if ($quota !== null && !$editId) { // edit tidak memakai kuota
     $db->prepare("INSERT IGNORE INTO quota_logs (user_id, date, count) VALUES (?, ?, 0)")
         ->execute([$userId, $today]);
 
@@ -64,6 +72,33 @@ if ($quota !== null) {
     $countStmt = $db->prepare("SELECT count FROM quota_logs WHERE user_id = ? AND date = ?");
     $countStmt->execute([$userId, $today]);
     $currentCount = (int)$countStmt->fetchColumn();
+}
+
+if ($editId) {
+    $st = $db->prepare("SELECT api_key, prompt FROM prompts WHERE id = ? AND user_id = ?");
+    $st->execute([$editId, $userId]);
+    $old = $st->fetch();
+    if (!$old) {
+        echo json_encode(['success' => false, 'error' => 'Undangan tidak ditemukan atau bukan milikmu']);
+        exit;
+    }
+    // API key lama dipertahankan supaya website undangan yang sudah jadi tetap terhubung
+    $newPrompt = str_replace('{{API_KEY}}', $old['api_key'], $prompt);
+    $db->prepare("UPDATE prompts SET title=?, groom_name=?, bride_name=?, prompt=?, form_data=? WHERE id=? AND user_id=?")
+       ->execute([$title, $groomName ?: null, $brideName ?: null, $newPrompt, $formData, $editId, $userId]);
+
+    // Hapus file lama yang tidak dipakai lagi (dan tidak dipakai undangan lain)
+    require_once __DIR__ . '/../../lib/storage.php';
+    foreach (array_diff(storage_refs_in($old['prompt']), storage_refs_in($newPrompt)) as $ref) {
+        $st = $db->prepare("SELECT COUNT(*) FROM prompts WHERE id <> ? AND prompt LIKE ?");
+        $st->execute([$editId, '%' . $ref . '%']);
+        if ((int)$st->fetchColumn() === 0) {
+            storage_delete($ref);
+        }
+    }
+
+    echo json_encode(['success' => true, 'id' => $editId, 'api_key' => $old['api_key'], 'remaining' => null]);
+    exit;
 }
 
 $apiKey = bin2hex(random_bytes(16));
@@ -119,8 +154,8 @@ if (strpos($prompt, '{{API_KEY}}') !== false) {
 }
 
 try {
-    $stmt = $db->prepare("INSERT INTO prompts (api_key, user_id, title, groom_name, bride_name, prompt) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$apiKey, $userId, $title, $groomName ?: null, $brideName ?: null, $prompt]);
+    $stmt = $db->prepare("INSERT INTO prompts (api_key, user_id, title, groom_name, bride_name, prompt, form_data) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$apiKey, $userId, $title, $groomName ?: null, $brideName ?: null, $prompt, $formData]);
 } catch (PDOException $ex) {
     // Penyimpanan gagal: kembalikan kuota yang sudah terpakai supaya user tidak dirugikan
     error_log('save prompt: ' . $ex->getMessage());

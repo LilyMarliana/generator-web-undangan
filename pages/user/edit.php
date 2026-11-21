@@ -9,6 +9,16 @@ if (!$p) {
     redirect(url_user('undangan.php'));
 }
 
+// Undangan yang punya data form lengkap diedit lewat wizard (generator.php?edit=ID)
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $st = getDB()->prepare("SELECT form_data FROM prompts WHERE id = ? AND user_id = ?");
+    $st->execute([$id, (int)$_SESSION['user']['id']]);
+    $fd = $st->fetchColumn();
+    if ($fd && json_decode($fd, true)) {
+        redirect(url_user('generator.php?edit=' . $id));
+    }
+}
+
 $error = '';
 $f = [
     'title'      => $p['title'],
